@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>라켓뚱보단 청백전</title>
 <meta name="description" content="라켓뚱보단 청백전 11.27 실시간 점수판 — 패기팀 VS 짬바팀">
+<meta name="theme-color" content="#20264F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="청백전">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -226,6 +232,103 @@ table.rec { width:100%; border-collapse:collapse; background:#fff; border:1px so
 #toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--navy); color:#fff; font-size:13px; padding:9px 14px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.2); opacity:0; pointer-events:none; transition:opacity .25s; max-width:90vw; text-align:center; z-index:50; }
 #toast.on { opacity:1; }
 
+/* 바로가기 */
+.quick { display:flex; flex-wrap:wrap; gap:6px; margin:8px 2px 0; }
+.qbtn { border:1px solid var(--line); background:#fff; color:var(--navy); border-radius:20px; padding:4px 11px; font-size:12.5px; font-weight:700; cursor:pointer; text-decoration:none; }
+.qbtn.hl { background:var(--navy); color:#fff; border-color:var(--navy); }
+.cbtns { display:flex; gap:6px; margin:6px 2px 0; flex-wrap:wrap; }
+
+/* ───── 빔프로젝터 중계 화면 ───── */
+#tv, #keeper { display:none; }
+body.tvmode, body.kmode { background:#0D1330; color:#fff; overflow:hidden; }
+body.tvmode .wrap, body.kmode .wrap { display:none; }
+body.tvmode #tv { display:grid; }
+body.kmode #keeper { display:flex; }
+#tv { position:fixed; inset:0; grid-template-rows:15vh minmax(0,1fr) 21vh; gap:1.4vh; padding:1.6vh 1.4vw;
+  background:radial-gradient(120% 90% at 50% 0%, #1B2A6B 0%, #0D1330 60%); }
+.tv-head { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:2vw; min-height:0; }
+.tv-head img { height:14vh; border-radius:1.4vh; box-shadow:0 1vh 3vh rgba(0,0,0,.35); }
+.tv-total { display:flex; align-items:center; justify-content:center; gap:1.6vw; }
+.tv-team { display:flex; align-items:center; gap:1.4vw; padding:1vh 2vw; border-radius:1.6vh; min-width:24vw; justify-content:space-between; }
+.tv-team.a { background:linear-gradient(135deg,#EC4D43,#A42520); }
+.tv-team.b { background:linear-gradient(135deg,#2E66E3,#163B95); flex-direction:row-reverse; }
+.tv-team .n { font-family:var(--brand); font-size:4.6vh; line-height:1; }
+.tv-team .n small { display:block; font-family:var(--font); font-size:1.7vh; font-weight:500; opacity:.85; margin-top:.6vh; }
+.tv-team .v { font-family:var(--brand); font-size:10vh; line-height:1; font-variant-numeric:tabular-nums; }
+.tv-mid { text-align:center; font-weight:900; font-size:2.4vh; color:#FFD54A; line-height:1.35; min-width:9vw; }
+.tv-mid .live { display:inline-flex; align-items:center; gap:.5vw; font-size:1.7vh; color:#9FF0BF; font-weight:700; margin-top:.6vh; }
+.tv-mid .live::before { content:""; width:1.1vh; height:1.1vh; border-radius:50%; background:#3BD47A; box-shadow:0 0 1.2vh #3BD47A; animation:blink 1.6s infinite; }
+@keyframes blink { 50% { opacity:.3; } }
+.tv-seeds { display:flex; flex-direction:column; gap:.6vh; }
+.tv-seed { display:flex; align-items:center; gap:.8vw; font-size:2.1vh; font-weight:800; background:rgba(255,255,255,.07); border-left:.6vh solid var(--sc); border-radius:.8vh; padding:.5vh .9vw; white-space:nowrap; }
+.tv-seed b { font-family:var(--brand); font-weight:400; font-size:2.6vh; }
+.tv-seed .a { color:#FF7A70; } .tv-seed .b { color:#7EA6FF; }
+.tv-courts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1.2vw; min-height:0; }
+.tv-court { background:rgba(255,255,255,.06); border:.3vh solid rgba(255,255,255,.12); border-top:.9vh solid var(--sc); border-radius:1.8vh; padding:1.6vh 1.2vw 1.4vh; display:flex; flex-direction:column; min-width:0; min-height:0; }
+.tv-court.live { border-color:#FFD54A; border-top-color:var(--sc); box-shadow:0 0 3.5vh rgba(255,213,74,.28); }
+.tv-ch { display:flex; justify-content:space-between; align-items:center; gap:1vw; font-size:3vh; font-weight:900; }
+.tv-ch .st { font-size:1.9vh; font-weight:800; padding:.3vh .9vw; border-radius:1vh; background:rgba(255,255,255,.12); white-space:nowrap; }
+.tv-court.live .tv-ch .st { background:#FFD54A; color:#3A2B00; }
+.tv-sub { font-size:2vh; opacity:.75; margin-top:.3vh; }
+.tv-names { display:grid; grid-template-columns:1fr 1fr; gap:1vw; margin-top:1.4vh; font-size:2.9vh; font-weight:900; line-height:1.3; }
+.tv-names small { display:block; font-size:1.7vh; font-weight:700; opacity:.85; }
+.tv-names .a { color:#FF8F87; } .tv-names .b { color:#93B5FF; text-align:right; }
+.tv-score { flex:1; display:flex; align-items:center; justify-content:center; gap:1.4vw; font-family:var(--brand); font-size:min(18vh, 8.6vw); line-height:1; font-variant-numeric:tabular-nums; min-height:0; }
+.tv-score span { display:inline-block; }
+.tv-score .a { color:#FF6B61; } .tv-score .b { color:#6E9BFF; } .tv-score i { font-style:normal; opacity:.35; font-size:.55em; }
+.tv-score.idle span { opacity:.35; }
+.tv-score .bump { animation:bump .7s ease-out; }
+@keyframes bump { 0% { transform:scale(1.3); text-shadow:0 0 4vh currentColor; } 100% { transform:scale(1); text-shadow:none; } }
+.tv-next, .tv-last { font-size:2vh; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tv-last b.a { color:#FF8F87; } .tv-last b.b { color:#93B5FF; }
+.tv-court .done-all { flex:1; display:flex; align-items:center; justify-content:center; font-size:3vh; opacity:.7; }
+.tv-foot { display:grid; grid-template-columns:1.5fr 1fr; gap:1.2vw; min-height:0; }
+.tv-box { background:rgba(255,255,255,.06); border-radius:1.6vh; padding:1.2vh 1vw; min-height:0; overflow:hidden; }
+.tv-box h4 { margin:0 0 .6vh; font-size:1.9vh; opacity:.75; font-weight:700; }
+.tv-rrow { display:grid; grid-template-columns:7vw repeat(15,minmax(0,1fr)); gap:.3vw; align-items:center; margin:.45vh 0; }
+.tv-rrow .lb { font-size:1.9vh; font-weight:900; color:var(--sc); white-space:nowrap; }
+.tv-rc { height:3.9vh; border-radius:.6vh; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.7vh; color:rgba(255,255,255,.55); }
+.tv-rc.a { background:#D93A33; color:#fff; } .tv-rc.b { background:#2157D4; color:#fff; } .tv-rc.live { background:#FFD54A; color:#3A2B00; }
+.tv-recent { list-style:none; margin:0; padding:0; }
+.tv-recent li { display:flex; align-items:center; gap:.6vw; font-size:2vh; padding:.35vh 0; white-space:nowrap; overflow:hidden; }
+.tv-recent .k { font-size:1.6vh; opacity:.7; flex:none; }
+.tv-recent .nm { overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.tv-recent .s { font-weight:900; flex:none; }
+.tv-recent .w { flex:none; font-size:1.6vh; font-weight:900; border-radius:.6vh; padding:.1vh .6vw; }
+.tv-recent .w.a { background:#D93A33; } .tv-recent .w.b { background:#2157D4; }
+.tv-tools { position:fixed; right:1vw; bottom:1vh; display:flex; gap:.6vw; opacity:.18; transition:opacity .2s; }
+.tv-tools:hover { opacity:1; }
+.tv-tools button { border:0; border-radius:.8vh; padding:.6vh 1vw; font-size:1.6vh; font-weight:700; background:rgba(255,255,255,.18); color:#fff; cursor:pointer; }
+
+/* ───── 태블릿 코트 점수판 ───── */
+#keeper { position:fixed; inset:0; flex-direction:column; gap:10px; padding:max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); background:#0F1530; }
+.k-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.k-top .t { font-family:var(--brand); font-size:24px; }
+.k-top .sd { background:var(--sc); border-radius:8px; padding:2px 9px; font-size:13px; font-weight:800; }
+.k-top select { margin-left:auto; max-width:46vw; font:600 14px var(--font); padding:7px 8px; border-radius:10px; border:0; background:#232B52; color:#fff; }
+.k-btn { border:0; border-radius:10px; padding:8px 12px; font:700 14px var(--font); background:#232B52; color:#fff; cursor:pointer; }
+.k-info { text-align:center; font-size:15px; color:#C9D2F0; }
+.k-info b { color:#fff; }
+.k-pads { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:10px; min-height:0; }
+.k-side { position:relative; display:flex; min-height:0; }
+.k-pad { flex:1; border:0; border-radius:22px; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.6vh; touch-action:manipulation; user-select:none; -webkit-user-select:none; cursor:pointer; font-family:var(--font); padding:10px; min-height:0; }
+.k-pad:active { filter:brightness(1.15); transform:scale(.99); }
+.k-side.a .k-pad { background:linear-gradient(160deg,#EC4D43,#A42520); }
+.k-side.b .k-pad { background:linear-gradient(160deg,#2E66E3,#163B95); }
+.k-pad .tn { font-size:clamp(17px,3.4vh,28px); font-weight:900; }
+.k-pad .nm { font-size:clamp(14px,2.6vh,22px); opacity:.92; text-align:center; }
+.k-pad .v { font-family:var(--brand); font-size:clamp(84px,30vh,300px); line-height:1; font-variant-numeric:tabular-nums; }
+.k-pad .v.bump { animation:bump .5s ease-out; }
+.k-pad .plus { font-size:clamp(16px,3vh,26px); font-weight:900; background:rgba(255,255,255,.2); border-radius:14px; padding:4px 20px; }
+.k-minus { position:absolute; left:12px; bottom:12px; border:0; border-radius:12px; padding:8px 14px; font:900 18px var(--font); background:rgba(0,0,0,.28); color:#fff; cursor:pointer; touch-action:manipulation; }
+.k-bottom { display:flex; gap:10px; }
+.k-finish { flex:1; border:0; border-radius:16px; padding:16px 10px; font:900 clamp(17px,2.8vh,24px) var(--font); background:#2A3156; color:#8E97B8; cursor:pointer; }
+.k-finish.ok { background:#3A4370; color:#fff; }
+.k-finish.ready { background:#FFC928; color:#3A2B00; box-shadow:0 0 0 4px rgba(255,201,40,.35); animation:pulse 1.2s infinite; }
+@keyframes pulse { 50% { box-shadow:0 0 0 9px rgba(255,201,40,.12); } }
+.k-finish.saved { background:#21865B; color:#fff; }
+.k-empty { flex:1; display:flex; align-items:center; justify-content:center; font-size:22px; color:#C9D2F0; text-align:center; }
+
 @media (max-width:420px) {
   .wrap { padding:10px 12px 56px; }
   .sbt { padding:8px 10px; min-height:70px; }
@@ -252,6 +355,11 @@ table.rec { width:100%; border-collapse:collapse; background:#fff; border:1px so
 <main class="wrap">
   <img class="banner" src="banner.webp" alt="라켓뚱보단 청백전 — 패기팀 VS 짬바팀, 11.27 오리초">
   <div class="when"><span><b>11.27(금) · 오리초</b> · 코트 3개 · 36명 · 25점 단판</span><span id="conn" class="conn">연결 확인 중</span></div>
+  <div class="quick">
+    <a class="qbtn hl" href="#tv">📺 중계 화면 (빔프로젝터)</a>
+    <a class="qbtn" href="#k1">1코트 점수판</a><a class="qbtn" href="#k2">2코트 점수판</a><a class="qbtn" href="#k3">3코트 점수판</a>
+    <button class="qbtn" id="installBtn" hidden>📲 앱 설치</button>
+  </div>
   <section id="board" class="board" aria-live="polite"></section>
   <nav class="tabbar" aria-label="화면 고르기">
     <div class="tabs">
@@ -269,6 +377,8 @@ table.rec { width:100%; border-collapse:collapse; background:#fff; border:1px so
   </nav>
   <section id="view"></section>
 </main>
+<section id="tv" aria-live="polite"></section>
+<section id="keeper"></section>
 <div id="toast" role="status"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -321,11 +431,17 @@ const esc = x => String(x).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>'
 const pair = (g, side) => `${esc(nm(g.s, side, g.i))}·${esc(nm(g.s, side, g.j))}`;
 function seedVars(s) { const sd = SEEDS[s]; return `--sc:${sd.c};--sd:${sd.d};--sl:${sd.l}`; }
 
+// p = 1 이면 태블릿 점수판에서 1점씩 올리는 중(경기 중). 경기 끝을 누르면 p가 지워지고 끝난 경기가 된다.
 function G(gid) {
   const r = S[gid] || {};
-  const a = num(r.a), b = num(r.b);
-  const done = a !== null && b !== null && a !== b;
-  return { a, b, done, w: done ? (a > b ? 'a' : 'b') : null, any: a !== null || b !== null, t: r.t || 0 };
+  const a = num(r.a), b = num(r.b), live = !!r.p;
+  const done = !live && a !== null && b !== null && a !== b;
+  return { a, b, done, live, w: done ? (a > b ? 'a' : 'b') : null, any: a !== null || b !== null, t: r.t || 0 };
+}
+// 25점 단판에서 끝낼 때가 됐는지 (25점 이상 + 2점 차, 또는 30점)
+function readyToFinish(r) {
+  const hi = Math.max(r.a || 0, r.b || 0), lo = Math.min(r.a || 0, r.b || 0);
+  return (hi >= PTS && hi - lo >= 2) || hi >= 30;
 }
 function derive() {
   const seed = {}; let A = 0, B = 0, done = 0;
@@ -393,6 +509,7 @@ function inp(gid, side) {
 function gStatus(gid) {
   const r = G(gid), g = GAMES[gid];
   if (r.done) return `<span class="bd ${r.w === 'a' ? 'wa' : 'wb'}">${TEAM[r.w]}팀 1승</span>`;
+  if (r.live) return `<span class="bd now">경기 중 ${r.a ?? 0}:${r.b ?? 0}</span>`;
   if (D.cur[g.c] === gid) return `<span class="bd now">지금 경기</span>`;
   if (r.any) return `<span class="bd live">입력 중</span>`;
   return `<span class="bd wait">대기</span>`;
@@ -453,6 +570,7 @@ function resGrid() {
       const g = GAMES[gid], r = G(gid);
       let cls = '', txt = '대기';
       if (r.done) { cls = r.w; txt = TEAM[r.w]; }
+      else if (r.live) { cls = 'live'; txt = '경기 중'; }
       else if (r.any) { cls = 'live'; txt = '입력 중'; }
       return `<button class="rc ${cls}" data-go="s${s}|${gid}" title="${s}시드 ${g.no}경기"><b>${g.no}</b>${txt}</button>`;
     }).join('');
@@ -522,6 +640,7 @@ function viewAll() {
 function viewCourt(c) {
   return `
     <div class="chead"><h2>${c}코트<small>${COURT_SEED[c]}시드 · ${COURT_DESC[c]}</small></h2><div class="cnt" data-live="cc:${c}">${courtCount(c)}</div></div>
+    <div class="cbtns"><a class="qbtn hl" href="#k${c}">📱 ${c}코트 태블릿 점수판 (1점씩 올리기)</a></div>
     <div class="tog"><label><input type="checkbox" id="hideDone" ${hideDone ? 'checked' : ''}> 끝난 경기 접기</label></div>
     <div class="clist ${hideDone ? 'hide-done' : ''}">${COURTS[c].map(gameCard).join('')}</div>`;
 }
@@ -538,12 +657,185 @@ function viewSeed(s) {
 }
 let unlocked = false;
 try { unlocked = sessionStorage.getItem(KEY + ':pin') === '1'; } catch (e) {}
+function viewModes() {
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  return `<div class="admin"><h3>화면 모드</h3>
+      <p><b>중계 화면</b>: 빔프로젝터·큰 TV용. 세 코트 점수와 전체 결과가 크게 나오고 저절로 바뀌어요. 노트북에서 열고 '전체 화면'을 누르세요.</p>
+      <div class="row2"><a class="btn" href="#tv">📺 중계 화면 열기</a></div>
+      <p style="margin-top:12px"><b>태블릿 점수판</b>: 코트마다 한 대. 득점할 때마다 그 팀 쪽을 누르면 1점씩 올라가고, 중계 화면에도 바로 보여요. 경기가 끝나면 '경기 끝'을 눌러 주세요.</p>
+      <div class="row2"><a class="btn ghost" href="#k1">1코트 점수판</a><a class="btn ghost" href="#k2">2코트 점수판</a><a class="btn ghost" href="#k3">3코트 점수판</a></div></div>
+    <div class="admin"><h3>앱으로 설치</h3>
+      <p>${ios ? '아이폰: 사파리 아래 <b>공유 버튼 → 홈 화면에 추가</b>를 누르면 앱처럼 깔려요.' : '안드로이드·PC 크롬: 위쪽 <b>📲 앱 설치</b> 버튼이나 크롬 메뉴의 <b>앱 설치 / 홈 화면에 추가</b>를 누르세요.'}</p>
+      <p>설치해도 점수는 인터넷으로 실시간 연결돼요.</p></div>`;
+}
 function viewAdmin() {
-  if (!unlocked) return `<div class="admin"><h3>관리</h3><p>점수 전체 지우기 같은 일은 PIN을 넣어야 해요.</p>
+  if (!unlocked) return viewModes() + `<div class="admin"><h3>관리 (PIN)</h3><p>점수 전체 지우기·백업은 PIN을 넣어야 해요.</p>
     <div class="row2"><input id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" aria-label="PIN"><button class="btn" data-act="pin">확인</button></div></div>`;
-  return `<div class="admin"><h3>연결 상태</h3><p id="connTxt">${connText()}</p></div>
+  return viewModes() + `<div class="admin"><h3>연결 상태</h3><p id="connTxt">${connText()}</p></div>
     <div class="admin"><h3>백업</h3><p>지금까지 들어온 점수를 파일로 받아 둡니다.</p><div class="row2"><button class="btn ghost" data-act="backup">점수 백업 받기</button></div></div>
     <div class="admin"><h3>점수 전체 지우기</h3><p>모든 기기에서 점수가 사라집니다. 대회 전 연습 점수를 지울 때만 쓰세요.</p><div class="row2"><button class="btn danger" data-act="reset">전체 지우기</button><button class="btn ghost" data-act="lock">잠그기</button></div></div>`;
+}
+
+/* ───────── 빔프로젝터 중계 화면 (#tv) ───────── */
+const $tv = document.getElementById('tv');
+let tvPrev = {};
+function renderTV() {
+  const { A, B, done, seed } = D;
+  const left = TOTAL - done;
+  let msg = !done ? '경기 전' : A === B ? '동점' : `${TEAM[A > B ? 'a' : 'b']}팀<br>${Math.abs(A - B)}승 앞섬`;
+  if (!left) msg = A === B ? '최종 무승부' : `${TEAM[A > B ? 'a' : 'b']}팀<br>최종 승리!`;
+  else if (done && Math.abs(A - B) > left) msg = `${TEAM[A > B ? 'a' : 'b']}팀<br>승리 확정!`;
+  const courts = [1,2,3].map(c => {
+    const s = COURT_SEED[c], gid = D.cur[c];
+    const doneList = COURTS[c].filter(x => G(x).done);
+    const last = doneList.length ? GAMES[doneList[doneList.length - 1]] : null;
+    const lastTxt = last ? (() => { const r = G(last.gid); return `직전 ${last.no}경기 <b class="${r.w}">${TEAM[r.w]} 승</b> ${r.a}:${r.b}`; })() : '';
+    if (!gid) return `<div class="tv-court" style="${seedVars(s)}"><div class="tv-ch"><span>${c}코트 · ${s}시드</span><span class="st">끝</span></div><div class="done-all">이 코트 경기가 모두 끝났어요</div><div class="tv-last">${lastTxt}</div></div>`;
+    const g = GAMES[gid], r = G(gid);
+    const idx = COURTS[c].indexOf(gid), nx = COURTS[c][idx + 1] ? GAMES[COURTS[c][idx + 1]] : null;
+    const st = r.live ? '경기 중' : '곧 시작';
+    return `<div class="tv-court ${r.live ? 'live' : ''}" style="${seedVars(s)}">
+      <div class="tv-ch"><span>${c}코트 · ${s}시드</span><span class="st">${st}</span></div>
+      <div class="tv-sub">${g.w}차례 · ${s}시드 ${g.no}경기 · 25점 단판</div>
+      <div class="tv-names"><div class="a"><small>${TEAM.a}팀</small>${pair(g,'a')}</div><div class="b"><small>${TEAM.b}팀</small>${pair(g,'b')}</div></div>
+      <div class="tv-score ${r.any ? '' : 'idle'}"><span class="a" data-k="${gid}:a">${r.a ?? 0}</span><i>:</i><span class="b" data-k="${gid}:b">${r.b ?? 0}</span></div>
+      <div class="tv-next">${nx ? `다음 · ${pair(nx,'a')} vs ${pair(nx,'b')}` : '마지막 경기'}</div>
+      <div class="tv-last">${lastTxt}</div>
+    </div>`;
+  }).join('');
+  const rows = [1,2,3].map(s => `<div class="tv-rrow" style="${seedVars(s)}"><span class="lb">${s}시드 ${seed[s].a}:${seed[s].b}</span>${SEED_GAMES[s].map(gid => {
+    const r = G(gid); const cls = r.done ? r.w : (r.live || r.any) ? 'live' : '';
+    return `<span class="tv-rc ${cls}">${GAMES[gid].no}</span>`; }).join('')}</div>`).join('');
+  const recent = Object.keys(GAMES).filter(gid => G(gid).done).sort((x,y) => G(y).t - G(x).t).slice(0, 5).map(gid => {
+    const g = GAMES[gid], r = G(gid);
+    return `<li><span class="k">${g.c}코트</span><span class="nm">${g.s}시드 ${g.no}경기 · ${pair(g,'a')} vs ${pair(g,'b')}</span><span class="s">${r.a}:${r.b}</span><span class="w ${r.w}">${TEAM[r.w]} 승</span></li>`;
+  }).join('') || '<li style="opacity:.6">아직 끝난 경기가 없어요</li>';
+  $tv.innerHTML = `
+    <div class="tv-head">
+      <img src="banner.webp" alt="라켓뚱보단 청백전">
+      <div class="tv-total">
+        <div class="tv-team a"><div class="n">${TEAM.a}팀<small>이긴 경기</small></div><div class="v">${A}</div></div>
+        <div class="tv-mid">${msg}<br><span class="live">실시간 중계</span></div>
+        <div class="tv-team b"><div class="n">${TEAM.b}팀<small>이긴 경기</small></div><div class="v">${B}</div></div>
+      </div>
+      <div class="tv-seeds">${[1,2,3].map(s => `<div class="tv-seed" style="${seedVars(s)}">${s}시드 <b class="a">${seed[s].a}</b>:<b class="b">${seed[s].b}</b></div>`).join('')}</div>
+    </div>
+    <div class="tv-courts">${courts}</div>
+    <div class="tv-foot">
+      <div class="tv-box"><h4>경기 결과 (칸 색 = 이긴 팀 · 노랑 = 경기 중) · 끝난 경기 ${done} / ${TOTAL}</h4>${rows}</div>
+      <div class="tv-box"><h4>방금 끝난 경기</h4><ul class="tv-recent">${recent}</ul></div>
+    </div>
+    <div class="tv-tools"><button data-tvact="fs">전체 화면</button><button data-tvact="back">나가기</button></div>`;
+  // 점수가 오른 칸은 반짝
+  const now = {};
+  $tv.querySelectorAll('[data-k]').forEach(el => {
+    const k = el.dataset.k; now[k] = el.textContent;
+    if (tvPrev[k] !== undefined && tvPrev[k] !== now[k]) el.classList.add('bump');
+  });
+  tvPrev = now;
+}
+$tv.addEventListener('click', e => {
+  const b = e.target.closest('[data-tvact]'); if (!b) return;
+  if (b.dataset.tvact === 'fs') { const d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen || (() => {})).call(d); }
+  if (b.dataset.tvact === 'back') { if (document.fullscreenElement) document.exitFullscreen(); location.hash = '#all'; }
+});
+
+/* ───────── 태블릿 코트 점수판 (#k1 #k2 #k3) ───────── */
+const $keeper = document.getElementById('keeper');
+let KC = 1, kPick = null, kSwap = false, kPrev = {};
+function keeperGame() { return (kPick && GAMES[kPick] && GAMES[kPick].c === KC) ? kPick : D.cur[KC]; }
+function kOptLabel(gid) {
+  const g = GAMES[gid], r = G(gid);
+  return `${g.w}차례 · ${g.no}경기 ${r.done ? `(${TEAM[r.w]} 승 ${r.a}:${r.b})` : r.live ? '(경기 중)' : ''}`;
+}
+function renderKeeper(force) {
+  const gid = keeperGame();
+  const sg = `${KC}|${gid}|${kSwap}`;
+  if (!force && $keeper.dataset.sig === sg) { patchKeeper(); return; }
+  $keeper.dataset.sig = sg;
+  const s = COURT_SEED[KC];
+  const top = `<div class="k-top" style="${seedVars(s)}"><button class="k-btn" data-k="back">← 나가기</button><span class="t">${KC}코트 점수판</span><span class="sd">${s}시드</span>
+    <select id="kSel" aria-label="경기 고르기">${COURTS[KC].map(x => `<option value="${x}" ${x === gid ? 'selected' : ''}>${kOptLabel(x)}</option>`).join('')}</select>
+    <button class="k-btn" data-k="swap">좌우 바꾸기</button></div>`;
+  if (!gid) { $keeper.innerHTML = top + `<div class="k-empty">${KC}코트 경기가 모두 끝났어요.<br>고칠 경기가 있으면 위에서 골라 주세요.</div>`; return; }
+  const g = GAMES[gid];
+  const sides = kSwap ? ['b','a'] : ['a','b'];
+  $keeper.innerHTML = top + `
+    <div class="k-info" id="kInfo"></div>
+    <div class="k-pads">${sides.map(side => `<div class="k-side ${side}">
+      <button class="k-pad" data-k="+${side}"><span class="tn">${TEAM[side]}팀</span><span class="nm">${esc(nm(g.s,side,g.i))} · ${esc(nm(g.s,side,g.j))}</span><span class="v" id="kv-${side}">0</span><span class="plus">눌러서 +1</span></button>
+      <button class="k-minus" data-k="-${side}" aria-label="${TEAM[side]}팀 1점 빼기">−1</button></div>`).join('')}</div>
+    <div class="k-bottom"><button class="k-finish" id="kFin" data-k="fin">경기 끝</button></div>`;
+  kPrev = {};
+  patchKeeper();
+}
+function patchKeeper() {
+  const gid = keeperGame(); if (!gid) return;
+  const g = GAMES[gid], r = G(gid);
+  for (const side of ['a','b']) {
+    const el = document.getElementById('kv-' + side); if (!el) continue;
+    const v = String(r[side] ?? 0);
+    if (el.textContent !== v) { el.textContent = v; if (kPrev[side] !== undefined) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } }
+    kPrev[side] = v;
+  }
+  const idx = COURTS[KC].indexOf(gid), nx = COURTS[KC][idx + 1] ? GAMES[COURTS[KC][idx + 1]] : null;
+  const info = document.getElementById('kInfo');
+  if (info) info.innerHTML = `<b>${g.w}차례 · ${g.s}시드 ${g.no}경기</b> · 25점 단판${nx ? ` · 다음: ${pair(nx,'a')} vs ${pair(nx,'b')}` : ' · 이 코트 마지막 경기'}`;
+  const fin = document.getElementById('kFin');
+  if (fin) {
+    fin.className = 'k-finish';
+    if (r.done) { fin.classList.add('saved'); fin.textContent = `저장됨 · ${TEAM[r.w]}팀 승 (${r.a}:${r.b})`; }
+    else if (r.a !== null && r.b !== null && r.a !== r.b) {
+      const w = r.a > r.b ? 'a' : 'b';
+      fin.classList.add(readyToFinish(r) ? 'ready' : 'ok');
+      fin.textContent = `경기 끝 — ${TEAM[w]}팀 승 (${r.a}:${r.b})`;
+    } else fin.textContent = '경기 끝 (점수가 같으면 못 끝내요)';
+  }
+  const sel = document.getElementById('kSel');
+  if (sel && document.activeElement !== sel) [...sel.options].forEach(o => { const t = kOptLabel(o.value); if (o.textContent !== t) o.textContent = t; });
+}
+$keeper.addEventListener('click', e => {
+  const b = e.target.closest('[data-k]'); if (!b) return;
+  const k = b.dataset.k, gid = keeperGame();
+  if (k === 'back') { location.hash = '#c' + KC; return; }
+  if (k === 'swap') { kSwap = !kSwap; renderKeeper(true); return; }
+  if (!gid) return;
+  if (k[0] === '+' || k[0] === '-') {
+    const r = G(gid);
+    if (r.done && !confirm('이미 끝난 경기예요. 점수를 고칠까요? (고친 뒤 다시 경기 끝을 눌러 주세요)')) return;
+    if (r.done) kPick = gid;
+    bump(gid, k[1], k[0] === '+' ? 1 : -1);
+    return;
+  }
+  if (k === 'fin') {
+    const r = G(gid); if (r.done) return;
+    if (r.a === null || r.b === null || r.a === r.b) { toast('점수가 같으면 끝낼 수 없어요.'); return; }
+    const w = r.a > r.b ? 'a' : 'b';
+    if (!confirm(`${TEAM[w]}팀 승 (${r.a}:${r.b})으로 저장할까요?`)) return;
+    if (finishGame(gid)) { kPick = null; renderKeeper(true); }
+  }
+});
+$keeper.addEventListener('change', e => {
+  if (e.target.id !== 'kSel') return;
+  const v = e.target.value; kPick = (v === D.cur[KC]) ? null : v; renderKeeper(true);
+});
+
+/* ───────── 화면 고르기 (#tv · #k1~3 · 일반 탭) ───────── */
+let MODE = 'app';
+function route() {
+  const h = location.hash.slice(1);
+  if (h === 'tv') MODE = 'tv';
+  else if (/^k[123]$/.test(h)) { if (KC !== +h[1]) { kPick = null; kSwap = false; } KC = +h[1]; MODE = 'keeper'; }
+  else MODE = 'app';
+  document.body.classList.toggle('tvmode', MODE === 'tv');
+  document.body.classList.toggle('kmode', MODE === 'keeper');
+  if (MODE === 'tv') { tvPrev = {}; renderTV(); return; }
+  if (MODE === 'keeper') { renderKeeper(true); return; }
+  renderBoard();
+  let t = h;
+  if (!TABS.includes(t)) { try { t = localStorage.getItem(KEY + ':tab') || 'all'; } catch (e) { t = 'all'; } }
+  if (!TABS.includes(t)) t = 'all';
+  setTab(t);
 }
 
 function renderView() {
@@ -583,6 +875,8 @@ let dirty = false;
 function typing() { const ae = document.activeElement; return !!(ae && ae.matches && ae.matches('input.sc') && $view.contains(ae)); }
 function refresh() {
   derive();
+  if (MODE === 'tv') { renderTV(); return; }
+  if (MODE === 'keeper') { renderKeeper(); return; }
   renderBoard();
   if (TAB === 'admin') { const el = document.getElementById('connTxt'); if (el) el.textContent = connText(); return; }
   if (sig() === structSig) { patchView(); return; }
@@ -693,10 +987,12 @@ function showConn() {
   el.textContent = ({ ok:'실시간 연결됨', off:'연결 끊김', denied:'저장 권한 없음', local:'이 기기에만 저장', wait:'연결 확인 중' })[connState];
   const t = document.getElementById('connTxt'); if (t) t.textContent = connText();
 }
+// 칸에 직접 쓴 점수 = 최종 점수(경기 중 표시를 지운다)
 function setScore(gid, side, v) {
   const before = G(gid).done;
   const cur = Object.assign({}, S[gid] || {});
   if (v === null) delete cur[side]; else cur[side] = v;
+  delete cur.p;
   cur.t = Date.now();
   const empty = cur.a === undefined && cur.b === undefined;
   if (empty) delete S[gid]; else S[gid] = cur;
@@ -705,8 +1001,34 @@ function setScore(gid, side, v) {
   if (!before && r.done) toast(`${g.s}시드 ${g.no}경기 끝! ${TEAM[r.w]}팀 1승 (${r.a}:${r.b})`);
   if (!cloud) return;
   const p = empty ? cloud.child(gid).remove()
-    : cloud.child(gid).update({ [side]: v === null ? null : v, t: firebase.database.ServerValue.TIMESTAMP });
+    : cloud.child(gid).update({ [side]: v === null ? null : v, p: null, t: firebase.database.ServerValue.TIMESTAMP });
   p.catch(() => toast('저장이 안 됐어요. 인터넷이나 권한을 확인해 주세요.'));
+}
+// 태블릿 점수판: 1점 올리기/내리기 (경기 중으로 표시)
+function bump(gid, side, d) {
+  const other = side === 'a' ? 'b' : 'a';
+  const cur = Object.assign({}, S[gid] || {});
+  cur[side] = Math.max(0, Math.min(99, (num(cur[side]) || 0) + d));
+  if (num(cur[other]) === null) cur[other] = 0;
+  cur.p = 1; cur.t = Date.now();
+  S[gid] = cur; saveLocal(); refresh();
+  if (!cloud) return;
+  const ref = cloud.child(gid);
+  const fail = () => toast('저장이 안 됐어요. 인터넷을 확인해 주세요.');
+  ref.child(side).transaction(x => Math.max(0, Math.min(99, (num(x) || 0) + d))).catch(fail);
+  ref.child(other).transaction(x => (num(x) === null ? 0 : x)).catch(fail);
+  ref.update({ p: 1, t: firebase.database.ServerValue.TIMESTAMP }).catch(fail);
+}
+// 경기 끝: 경기 중 표시를 지워 끝난 경기로 만든다
+function finishGame(gid) {
+  const r = G(gid), g = GAMES[gid];
+  if (r.a === null || r.b === null || r.a === r.b) { toast('점수가 같으면 끝낼 수 없어요.'); return false; }
+  const cur = Object.assign({}, S[gid] || {}); delete cur.p; cur.t = Date.now();
+  S[gid] = cur; saveLocal(); refresh();
+  const w = r.a > r.b ? 'a' : 'b';
+  toast(`${g.s}시드 ${g.no}경기 끝! ${TEAM[w]}팀 1승 (${r.a}:${r.b})`);
+  if (cloud) cloud.child(gid).update({ p: null, t: firebase.database.ServerValue.TIMESTAMP }).catch(() => toast('저장이 안 됐어요. 인터넷을 확인해 주세요.'));
+  return true;
 }
 function initCloud() {
   if (!window.firebase || !window.FIREBASE_CONFIG) { connState = 'local'; showConn(); return; }
@@ -734,14 +1056,31 @@ function toast(msg) { const t = document.getElementById('toast'); t.textContent 
 /* ───────── 시작 ───────── */
 loadLocal();
 derive();
-renderBoard();
-let startTab = location.hash.slice(1);
-if (!TABS.includes(startTab)) { try { startTab = localStorage.getItem(KEY + ':tab') || 'all'; } catch (e) { startTab = 'all'; } }
-if (!TABS.includes(startTab)) startTab = 'all';
-setTab(startTab);
+route();
 showConn();
 initCloud();
-window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (TABS.includes(t) && t !== TAB) setTab(t); });
+window.addEventListener('hashchange', () => {
+  const t = location.hash.slice(1);
+  if (MODE === 'app' && TABS.includes(t)) { if (t !== TAB) setTab(t); return; }
+  route();
+});
+
+/* ───────── 앱 설치 (홈 화면에 추가) ───────── */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); installEvt = e;
+  const b = document.getElementById('installBtn'); if (b) b.hidden = false;
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!installEvt) return;
+  installEvt.prompt();
+  try { await installEvt.userChoice; } catch (e) {}
+  installEvt = null; document.getElementById('installBtn').hidden = true;
+});
+window.addEventListener('appinstalled', () => { const b = document.getElementById('installBtn'); if (b) b.hidden = true; toast('앱으로 설치됐어요.'); });
 </script>
 </body>
 </html>
