@@ -1165,7 +1165,7 @@ function installGuide() {
       <p class="sm">버튼이 안 되면: 화면 ${isIOS ? '오른쪽 아래' : '오른쪽 위'} <b>⋮ (점 세 개)</b> → <b>"${isIOS ? 'Safari로 열기' : '다른 브라우저로 열기'}"</b></p>`);
     return;
   }
-  if (installEvt) { promptInstall(); return; }
+  if (!isIOS && installEvt) { promptInstall(); return; }   // 안드로이드·PC 크롬: 바로 설치 창
   if (isIOS) {
     const top = isIOSChrome;
     showGuide(`<h3>아이폰 홈 화면에 앱 추가</h3>
