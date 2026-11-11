@@ -95,6 +95,7 @@ h2.sec small { font-size:12px; font-weight:500; color:var(--text-2); }
 .bd.now { background:var(--yellow); color:#4A3700; }
 .bd.wa { background:var(--ta); color:#fff; }
 .bd.wb { background:var(--tb); color:#fff; }
+.bd.def { background:#FFE8CC; color:#A3520C; }
 .empty-note { text-align:center; color:var(--text-2); font-size:13px; padding:18px 0; }
 input.sc { flex:none; width:48px; height:42px; border:1.5px solid var(--line); border-radius:8px; text-align:center; font:800 20px var(--font); color:var(--text); background:#fff; padding:0; font-variant-numeric:tabular-nums; }
 input.sc:focus { outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(32,38,79,.16); }
@@ -305,7 +306,7 @@ body.kmode #keeper { display:flex; }
 .k-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .k-top .t { font-family:var(--brand); font-size:24px; }
 .k-top .sd { background:var(--sc); border-radius:8px; padding:2px 9px; font-size:13px; font-weight:800; }
-.k-top select { margin-left:auto; max-width:46vw; font:600 14px var(--font); padding:7px 8px; border-radius:10px; border:0; background:#232B52; color:#fff; }
+.k-top select { order:5; flex:1 1 300px; min-width:0; font:700 15px var(--font); padding:9px 10px; border-radius:10px; border:0; background:#232B52; color:#fff; text-overflow:ellipsis; }
 .k-btn { border:0; border-radius:10px; padding:8px 12px; font:700 14px var(--font); background:#232B52; color:#fff; cursor:pointer; }
 .k-info { text-align:center; font-size:15px; color:#C9D2F0; }
 .k-info b { color:#fff; }
@@ -322,6 +323,8 @@ body.kmode #keeper { display:flex; }
 .k-pad .plus { font-size:clamp(16px,3vh,26px); font-weight:900; background:rgba(255,255,255,.2); border-radius:14px; padding:4px 20px; }
 .k-minus { position:absolute; left:12px; bottom:12px; border:0; border-radius:12px; padding:8px 14px; font:900 18px var(--font); background:rgba(0,0,0,.28); color:#fff; cursor:pointer; touch-action:manipulation; }
 .k-bottom { display:flex; gap:10px; }
+.k-skip { flex:none; border:0; border-radius:16px; padding:8px 14px; font:800 clamp(13px,2vh,16px)/1.25 var(--font); background:#3B3355; color:#FFD8A8; cursor:pointer; }
+.k-skip[hidden] { display:none; }
 .k-finish { flex:1; border:0; border-radius:16px; padding:16px 10px; font:900 clamp(17px,2.8vh,24px) var(--font); background:#2A3156; color:#8E97B8; cursor:pointer; }
 .k-finish.ok { background:#3A4370; color:#fff; }
 .k-finish.ready { background:#FFC928; color:#3A2B00; box-shadow:0 0 0 4px rgba(255,201,40,.35); animation:pulse 1.2s infinite; }
@@ -450,8 +453,13 @@ function derive() {
     for (const gid of SEED_GAMES[s]) { const r = G(gid); if (r.done) { o.done++; r.w === 'a' ? o.a++ : o.b++; } }
     seed[s] = o; A += o.a; B += o.b; done += o.done;
   }
-  const cur = {};
-  for (const c of [1,2,3]) cur[c] = COURTS[c].find(gid => !G(gid).done) || null;
+  // 코트별 지금 경기: 점수를 올리는 중(경기 중)인 경기가 있으면 그것, 없으면 순서상 아직 안 끝난 첫 경기.
+  // (늦게 온 사람 때문에 순서를 바꿔 해도 실제로 하는 경기가 '지금 경기'가 된다)
+  const cur = {}, nxt = {};
+  for (const c of [1,2,3]) {
+    cur[c] = COURTS[c].find(gid => G(gid).live) || COURTS[c].find(gid => !G(gid).done) || null;
+    nxt[c] = COURTS[c].find(gid => gid !== cur[c] && !G(gid).done && !G(gid).live) || null;
+  }
   const rec = {};
   for (const gid in GAMES) {
     const g = GAMES[gid], r = G(gid);
@@ -461,8 +469,16 @@ function derive() {
     }
   }
   const recent = Object.keys(GAMES).filter(gid => G(gid).done).sort((x,y) => G(y).t - G(x).t).slice(0, 4);
-  D = { seed, A, B, done, cur, rec, recent };
+  D = { seed, A, B, done, cur, nxt, rec, recent };
 }
+// 미뤄진 경기: 아직 안 했는데, 같은 코트에서 뒤 순서 경기가 이미 끝났거나 하는 중
+function isDeferred(gid) {
+  const g = GAMES[gid], r = G(gid);
+  if (r.done || r.live) return false;
+  const list = COURTS[g.c], i = list.indexOf(gid);
+  return list.slice(i + 1).some(x => { const y = G(x); return y.done || y.live; });
+}
+function deferredCount(c, except) { return COURTS[c].filter(x => x !== except && x !== D.cur[c] && isDeferred(x)).length; }
 function seedLead(s) {
   const o = D.seed[s];
   if (!o.done) return { t:'경기 전', k:'d' };
@@ -510,7 +526,8 @@ function gStatus(gid) {
   const r = G(gid), g = GAMES[gid];
   if (r.done) return `<span class="bd ${r.w === 'a' ? 'wa' : 'wb'}">${TEAM[r.w]}팀 1승</span>`;
   if (r.live) return `<span class="bd now">경기 중 ${r.a ?? 0}:${r.b ?? 0}</span>`;
-  if (D.cur[g.c] === gid) return `<span class="bd now">지금 경기</span>`;
+  if (D.cur[g.c] === gid) return `<span class="bd now">${isDeferred(gid) ? '미룬 경기 · 지금' : '지금 경기'}</span>`;
+  if (isDeferred(gid)) return `<span class="bd def">미뤄짐 · 다음에</span>`;
   if (r.any) return `<span class="bd live">입력 중</span>`;
   return `<span class="bd wait">대기</span>`;
 }
@@ -601,9 +618,8 @@ try { hideDone = localStorage.getItem(KEY + ':hideDone') === '1'; } catch (e) {}
 function viewAll() {
   const nowCards = [1,2,3].map(c => {
     const gid = D.cur[c];
-    const idx = gid ? COURTS[c].indexOf(gid) : -1;
-    const nx = idx >= 0 && COURTS[c][idx + 1] ? GAMES[COURTS[c][idx + 1]] : null;
-    const nextTxt = nx ? `다음: ${pair(nx,'a')} vs ${pair(nx,'b')}` : '';
+    const nx = D.nxt[c] ? GAMES[D.nxt[c]] : null;
+    const nextTxt = nx ? `다음: ${nx.no}경기 ${pair(nx,'a')} vs ${pair(nx,'b')}${isDeferred(nx.gid) ? ' (미룬 경기)' : ''}` : '';
     return `<div class="ctitle"><span>${c}코트 · ${COURT_SEED[c]}시드 <small>${COURT_DESC[c]}</small></span><small>${nextTxt}</small></div>${gid ? gameCard(gid) : '<div class="empty-note">이 코트 경기가 모두 끝났어요.</div>'}`;
   }).join('');
   const seedCards = [1,2,3].map(s => {
@@ -687,19 +703,20 @@ function renderTV() {
   else if (done && Math.abs(A - B) > left) msg = `${TEAM[A > B ? 'a' : 'b']}팀<br>승리 확정!`;
   const courts = [1,2,3].map(c => {
     const s = COURT_SEED[c], gid = D.cur[c];
-    const doneList = COURTS[c].filter(x => G(x).done);
-    const last = doneList.length ? GAMES[doneList[doneList.length - 1]] : null;
+    const doneList = COURTS[c].filter(x => G(x).done).sort((x, y) => G(y).t - G(x).t);
+    const last = doneList.length ? GAMES[doneList[0]] : null;
     const lastTxt = last ? (() => { const r = G(last.gid); return `직전 ${last.no}경기 <b class="${r.w}">${TEAM[r.w]} 승</b> ${r.a}:${r.b}`; })() : '';
     if (!gid) return `<div class="tv-court" style="${seedVars(s)}"><div class="tv-ch"><span>${c}코트 · ${s}시드</span><span class="st">끝</span></div><div class="done-all">이 코트 경기가 모두 끝났어요</div><div class="tv-last">${lastTxt}</div></div>`;
     const g = GAMES[gid], r = G(gid);
-    const idx = COURTS[c].indexOf(gid), nx = COURTS[c][idx + 1] ? GAMES[COURTS[c][idx + 1]] : null;
+    const nx = D.nxt[c] ? GAMES[D.nxt[c]] : null;
     const st = r.live ? '경기 중' : '곧 시작';
+    const dc = deferredCount(c);
     return `<div class="tv-court ${r.live ? 'live' : ''}" style="${seedVars(s)}">
       <div class="tv-ch"><span>${c}코트 · ${s}시드</span><span class="st">${st}</span></div>
       <div class="tv-sub">${g.w}차례 · ${s}시드 ${g.no}경기 · 25점 단판</div>
       <div class="tv-names"><div class="a"><small>${TEAM.a}팀</small>${pair(g,'a')}</div><div class="b"><small>${TEAM.b}팀</small>${pair(g,'b')}</div></div>
       <div class="tv-score ${r.any ? '' : 'idle'}"><span class="a" data-k="${gid}:a">${r.a ?? 0}</span><i>:</i><span class="b" data-k="${gid}:b">${r.b ?? 0}</span></div>
-      <div class="tv-next">${nx ? `다음 · ${pair(nx,'a')} vs ${pair(nx,'b')}` : '마지막 경기'}</div>
+      <div class="tv-next">${nx ? `다음 · ${nx.no}경기 ${pair(nx,'a')} vs ${pair(nx,'b')}${isDeferred(nx.gid) ? ' (미룬 경기)' : ''}` : '마지막 경기'}${dc ? ` · 미뤄진 경기 ${dc}개` : ''}</div>
       <div class="tv-last">${lastTxt}</div>
     </div>`;
   }).join('');
@@ -744,9 +761,12 @@ $tv.addEventListener('click', e => {
 const $keeper = document.getElementById('keeper');
 let KC = 1, kPick = null, kSwap = false, kPrev = {};
 function keeperGame() { return (kPick && GAMES[kPick] && GAMES[kPick].c === KC) ? kPick : D.cur[KC]; }
+// 경기 고르기 목록 글자 (그냥 글자, HTML 아님)
 function kOptLabel(gid) {
   const g = GAMES[gid], r = G(gid);
-  return `${g.w}차례 · ${g.no}경기 ${r.done ? `(${TEAM[r.w]} 승 ${r.a}:${r.b})` : r.live ? '(경기 중)' : ''}`;
+  const p = side => `${nm(g.s, side, g.i)}·${nm(g.s, side, g.j)}`;
+  const st = r.done ? ` ✔ ${TEAM[r.w]} 승 ${r.a}:${r.b}` : r.live ? ' ● 경기 중' : isDeferred(gid) ? ' ⏸ 미룸' : '';
+  return `${g.no}경기 · ${p('a')} vs ${p('b')}${st}`;
 }
 function renderKeeper(force) {
   const gid = keeperGame();
@@ -755,7 +775,7 @@ function renderKeeper(force) {
   $keeper.dataset.sig = sg;
   const s = COURT_SEED[KC];
   const top = `<div class="k-top" style="${seedVars(s)}"><button class="k-btn" data-k="back">← 나가기</button><span class="t">${KC}코트 점수판</span><span class="sd">${s}시드</span>
-    <select id="kSel" aria-label="경기 고르기">${COURTS[KC].map(x => `<option value="${x}" ${x === gid ? 'selected' : ''}>${kOptLabel(x)}</option>`).join('')}</select>
+    <select id="kSel" aria-label="경기 고르기">${COURTS[KC].map(x => `<option value="${x}" ${x === gid ? 'selected' : ''}>${esc(kOptLabel(x))}</option>`).join('')}</select>
     <button class="k-btn" data-k="swap">좌우 바꾸기</button></div>`;
   if (!gid) { $keeper.innerHTML = top + `<div class="k-empty">${KC}코트 경기가 모두 끝났어요.<br>고칠 경기가 있으면 위에서 골라 주세요.</div>`; return; }
   const g = GAMES[gid];
@@ -765,9 +785,16 @@ function renderKeeper(force) {
     <div class="k-pads">${sides.map(side => `<div class="k-side ${side}">
       <button class="k-pad" data-k="+${side}"><span class="tn">${TEAM[side]}팀</span><span class="nm">${esc(nm(g.s,side,g.i))} · ${esc(nm(g.s,side,g.j))}</span><span class="v" id="kv-${side}">0</span><span class="plus">눌러서 +1</span></button>
       <button class="k-minus" data-k="-${side}" aria-label="${TEAM[side]}팀 1점 빼기">−1</button></div>`).join('')}</div>
-    <div class="k-bottom"><button class="k-finish" id="kFin" data-k="fin">경기 끝</button></div>`;
+    <div class="k-bottom"><button class="k-skip" id="kSkip" data-k="skip">⏭ 미루고<br>다음 경기 먼저</button><button class="k-finish" id="kFin" data-k="fin">경기 끝</button></div>`;
   kPrev = {};
   patchKeeper();
+}
+// 늦게 온 사람이 있을 때: 이 경기를 미루고, 이 경기 네 명이 안 나오는 다음 경기를 먼저 한다
+function skipCandidate(gid) {
+  const g = GAMES[gid], list = COURTS[KC], i = list.indexOf(gid);
+  const open = x => x !== gid && !G(x).done && !G(x).live;
+  const rest = list.slice(i + 1).concat(list.slice(0, i)).filter(open);
+  return rest.find(x => { const y = GAMES[x]; return ![y.i, y.j].some(v => v === g.i || v === g.j); }) || rest[0] || null;
 }
 function patchKeeper() {
   const gid = keeperGame(); if (!gid) return;
@@ -778,9 +805,12 @@ function patchKeeper() {
     if (el.textContent !== v) { el.textContent = v; if (kPrev[side] !== undefined) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } }
     kPrev[side] = v;
   }
-  const idx = COURTS[KC].indexOf(gid), nx = COURTS[KC][idx + 1] ? GAMES[COURTS[KC][idx + 1]] : null;
+  const nxId = COURTS[KC].find(x => x !== gid && !G(x).done && !G(x).live), nx = nxId ? GAMES[nxId] : null;
+  const dc = deferredCount(KC, gid);
   const info = document.getElementById('kInfo');
-  if (info) info.innerHTML = `<b>${g.w}차례 · ${g.s}시드 ${g.no}경기</b> · 25점 단판${nx ? ` · 다음: ${pair(nx,'a')} vs ${pair(nx,'b')}` : ' · 이 코트 마지막 경기'}`;
+  if (info) info.innerHTML = `<b>${g.w}차례 · ${g.s}시드 ${g.no}경기</b>${isDeferred(gid) ? ' (미룬 경기)' : ''} · 25점 단판${nx ? ` · 다음: ${nx.no}경기 ${pair(nx,'a')} vs ${pair(nx,'b')}` : ' · 이 코트 마지막 경기'}${dc ? ` · 미뤄진 경기 ${dc}개` : ''}`;
+  const sk = document.getElementById('kSkip');
+  if (sk) sk.hidden = r.any || r.done || !skipCandidate(gid);
   const fin = document.getElementById('kFin');
   if (fin) {
     fin.className = 'k-finish';
@@ -789,7 +819,7 @@ function patchKeeper() {
       const w = r.a > r.b ? 'a' : 'b';
       fin.classList.add(readyToFinish(r) ? 'ready' : 'ok');
       fin.textContent = `경기 끝 — ${TEAM[w]}팀 승 (${r.a}:${r.b})`;
-    } else fin.textContent = '경기 끝 (점수가 같으면 못 끝내요)';
+    } else fin.textContent = r.any ? '동점 — 아직 못 끝내요' : '경기 끝';
   }
   const sel = document.getElementById('kSel');
   if (sel && document.activeElement !== sel) [...sel.options].forEach(o => { const t = kOptLabel(o.value); if (o.textContent !== t) o.textContent = t; });
@@ -800,6 +830,13 @@ $keeper.addEventListener('click', e => {
   if (k === 'back') { location.hash = '#c' + KC; return; }
   if (k === 'swap') { kSwap = !kSwap; renderKeeper(true); return; }
   if (!gid) return;
+  if (k === 'skip') {
+    const cand = skipCandidate(gid); if (!cand) return;
+    const g = GAMES[gid], c2 = GAMES[cand];
+    kPick = cand; renderKeeper(true);
+    toast(`${g.no}경기는 미루고 ${c2.no}경기를 먼저 해요. 첫 점수를 넣으면 중계 화면도 바뀌어요.`);
+    return;
+  }
   if (k[0] === '+' || k[0] === '-') {
     const r = G(gid);
     if (r.done && !confirm('이미 끝난 경기예요. 점수를 고칠까요? (고친 뒤 다시 경기 끝을 눌러 주세요)')) return;
