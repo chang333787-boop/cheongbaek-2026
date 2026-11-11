@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>라켓뚱보단 청백전</title>
+<meta name="description" content="라켓뚱보단 청백전 11.27 실시간 점수판">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F4F7FC; --surface:#FFFFFF; --surface-2:#F8FAFD; --line:#DCE2EC; --line-2:#EBEFF5;
+  --text:#202535; --text-2:#626C80; --navy:#20264F; --navy-50:#EEF0F8;
+  --blue:#1F55D0; --blue-d:#173E9C; --blue-50:#E8EEFC; --blue-100:#D3DFFB;
+  --wht-50:#F3F5F9; --wht-100:#E4E8F0;
+  --ta:#D93A33; --ta-d:#A42520; --ta-50:#FDEDEC; --ta-100:#F8D2CF;   /* 패기팀 */
+  --tb:#2157D4; --tb-d:#173E9C; --tb-50:#E8EEFC; --tb-100:#D0DDFB;   /* 짬바팀 */
+  --win:#21865B; --win-50:#E8F5EE; --yellow:#FFC928; --yellow-50:#FFF7DB; --danger:#D64545;
+  --font:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --brand:"Black Han Sans","Noto Sans KR","Malgun Gothic",sans-serif;
+  color-scheme: light;
+}
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 var(--font); }
+button { font-family:inherit; }
+.wrap { max-width:688px; margin:0 auto; padding:12px 16px 64px; }
+.banner { display:block; width:100%; height:auto; aspect-ratio:1440/480; border-radius:18px; box-shadow:0 4px 14px rgba(23,40,110,.18); }
+.when { display:flex; justify-content:space-between; align-items:center; margin:8px 2px 0; font-size:12.5px; color:var(--text-2); }
+.when b { color:var(--navy); }
+.conn { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:2px 9px; border-radius:20px; background:var(--wht-50); color:var(--text-2); }
+.conn::before { content:""; width:7px; height:7px; border-radius:50%; background:#A0A8B8; }
+.conn.ok { background:var(--win-50); color:var(--win); } .conn.ok::before { background:var(--win); }
+.conn.bad { background:#FDEEEE; color:var(--danger); } .conn.bad::before { background:var(--danger); }
+
+/* 점수판 */
+.board { margin-top:10px; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 2px 8px rgba(32,38,79,.06); padding:14px; }
+.sb { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:stretch; }
+.sbt { position:relative; border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; min-height:78px; }
+.sbt.a { background:linear-gradient(135deg,#EC4D43,#A42520); color:#fff; }
+.sbt.b { background:linear-gradient(135deg,#2E66E3,#163B95); color:#fff; flex-direction:row-reverse; }
+.sbt .tn { font-family:var(--brand); font-size:24px; line-height:1; }
+.sbt .tn small { display:block; font-family:var(--font); font-size:11px; font-weight:500; opacity:.8; margin-top:4px; }
+.sbt.b .tn { text-align:right; }
+.sbt .pt { font-family:var(--brand); font-size:50px; line-height:1; font-variant-numeric:tabular-nums; }
+.sbt .lead { position:absolute; top:-9px; left:50%; transform:translateX(-50%); background:var(--yellow); color:#5A4300; font-size:11px; font-weight:800; padding:1px 8px; border-radius:10px; white-space:nowrap; }
+.sbm { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:64px; }
+.sbm .colon { font-family:var(--brand); font-size:30px; color:#B5BCCB; line-height:1; }
+.sbm .msg { font-size:11.5px; font-weight:700; color:var(--navy); margin-top:4px; line-height:1.3; }
+.sbs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:12px; }
+.sbs button { border:1px solid var(--line); background:var(--surface-2); border-radius:10px; padding:6px 4px 5px; cursor:pointer; position:relative; overflow:hidden; text-align:center; }
+.sbs button::before { content:""; position:absolute; left:0; right:0; top:0; height:3px; background:var(--sc); }
+.sbs .l { display:block; font-size:11.5px; font-weight:700; color:var(--sc); }
+.sbs .v { font-family:var(--brand); font-size:20px; line-height:1.2; }
+.sbs .v .a { color:var(--ta); } .sbs .v .b { color:var(--tb); } .sbs .v i { font-style:normal; color:#B5BCCB; margin:0 3px; }
+.sbs small { display:block; font-size:10.5px; color:var(--text-2); }
+.prog { margin-top:12px; }
+.prog .bar { height:8px; border-radius:6px; background:var(--line-2); overflow:hidden; display:flex; }
+.prog .bar span { display:block; height:100%; }
+.prog .bar .a { background:var(--ta); } .prog .bar .b { background:var(--tb); } .prog .bar .d { background:#C7CDD9; }
+.prog .txt { display:flex; justify-content:space-between; font-size:12px; color:var(--text-2); margin-top:5px; }
+.recent { margin:10px 0 0; padding:0; list-style:none; border-top:1px dashed var(--line); padding-top:8px; }
+.recent li { display:flex; align-items:center; gap:6px; font-size:12.5px; padding:2px 0; min-width:0; }
+.recent .k { flex:none; font-size:11px; font-weight:700; color:var(--text-2); background:var(--wht-50); border-radius:6px; padding:0 6px; }
+.recent .n { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.recent .s { flex:none; font-weight:800; font-variant-numeric:tabular-nums; }
+.recent .wa { color:var(--ta); } .recent .wb { color:var(--tb); }
+.recent .mw { flex:none; font-size:11px; font-weight:800; color:#fff; border-radius:6px; padding:0 6px; }
+.recent .mw.a { background:var(--ta); } .recent .mw.b { background:var(--tb); } .recent .mw.d { background:#9AA2B2; }
+.recent .none { color:var(--text-2); }
+
+/* 탭 */
+.tabbar { position:sticky; top:0; z-index:30; background:var(--bg); padding:10px 0 6px; margin-top:4px; }
+.tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:4px; box-shadow:0 2px 8px rgba(32,38,79,.06); }
+.tabs button { border:0; background:transparent; color:var(--text-2); font-size:14px; font-weight:500; padding:9px 2px; border-radius:8px; cursor:pointer; }
+.tabs button.on { background:var(--navy); color:#fff; font-weight:700; }
+.subtabs { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:8px; }
+.subtabs button { position:relative; overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:10px; padding:9px 2px 7px; font-size:13px; font-weight:700; color:var(--text); cursor:pointer; }
+.subtabs button::before { content:""; position:absolute; left:0; right:0; top:0; height:3px; background:var(--sc); }
+.subtabs button.on { background:var(--sc); border-color:var(--sc); color:#fff; }
+.subtabs button small { font-size:9.5px; font-weight:700; border:1px solid currentColor; border-radius:4px; padding:0 3px; margin-left:3px; opacity:.75; }
+
+/* 공통 */
+h2.sec { font-size:16px; margin:18px 2px 6px; display:flex; align-items:baseline; gap:8px; }
+h2.sec small { font-size:12px; font-weight:500; color:var(--text-2); }
+.chip { display:inline-block; background:var(--sl); color:var(--sc); font-weight:700; font-size:11.5px; padding:1px 7px; border-radius:6px; white-space:nowrap; }
+.bd { display:inline-block; font-size:11.5px; font-weight:700; padding:1px 8px; border-radius:6px; white-space:nowrap; }
+.bd.wait { background:var(--wht-50); color:var(--text-2); }
+.bd.live { background:var(--yellow-50); color:#8A6500; }
+.bd.now { background:var(--yellow); color:#4A3700; }
+.bd.tb { background:#FDEEEE; color:var(--danger); }
+.bd.wa { background:var(--ta); color:#fff; }
+.bd.wb { background:var(--tb); color:#fff; }
+.bd.dr { background:#C7CDD9; color:var(--navy); }
+.empty-note { text-align:center; color:var(--text-2); font-size:13px; padding:18px 0; }
+
+/* 판 카드 (코트) */
+.gcard { background:#fff; border:1px solid var(--line); border-left:4px solid var(--sc); border-radius:12px; padding:10px 12px; margin:8px 0; scroll-margin-top:140px; }
+.gcard.now { border-color:var(--yellow); border-left-color:var(--sc); box-shadow:0 0 0 2px var(--yellow); }
+.gcard.done { background:var(--surface-2); }
+.gcard header { display:flex; align-items:center; gap:6px; font-size:13px; flex-wrap:wrap; }
+.gcard .wv { font-weight:800; color:var(--navy); }
+.gcard .lbl { font-weight:600; color:var(--text); }
+.gcard .st { margin-left:auto; }
+.row { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin-top:8px; }
+.team { display:flex; align-items:center; justify-content:space-between; gap:8px; border-radius:10px; padding:7px 9px; min-width:0; border:1.5px solid transparent; }
+.team.a { background:var(--ta-50); }
+.team.b { background:var(--tb-50); }
+.nms { display:flex; flex-direction:column; font-weight:700; font-size:14px; line-height:1.35; min-width:0; }
+.nms .tt { font-size:10.5px; font-weight:800; letter-spacing:.5px; }
+.team.a .tt { color:var(--ta); } .team.b .tt { color:var(--tb); }
+.team.b .nms { text-align:right; }
+.nms span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.vs { font-size:12px; color:var(--text-2); font-weight:700; }
+[data-win="a"] .team.a { background:var(--ta-100); border-color:var(--ta); }
+[data-win="b"] .team.b { background:var(--tb-100); border-color:var(--tb); }
+input.sc { flex:none; width:48px; height:42px; border:1.5px solid var(--line); border-radius:8px; text-align:center; font:800 20px var(--font); color:var(--text); background:#fff; padding:0; font-variant-numeric:tabular-nums; }
+input.sc:focus { outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(32,38,79,.16); }
+input.sc.a { color:var(--ta-d); } input.sc.b { color:var(--tb-d); }
+.ml { margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:12px; color:var(--text-2); }
+.ml-link { border:0; background:none; padding:0; font-size:12px; font-weight:700; color:var(--sc); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.ml-g { font-variant-numeric:tabular-nums; } .ml-g.d { color:var(--text); font-weight:600; }
+.ml-r { margin-left:auto; }
+.flash { animation:flash 1.4s ease-out; }
+@keyframes flash { 0%,30% { box-shadow:0 0 0 3px var(--navy); } 100% { box-shadow:0 0 0 0 transparent; } }
+
+/* 코트 머리 */
+.chead { display:flex; align-items:flex-end; justify-content:space-between; margin:14px 2px 4px; }
+.chead h2 { font-family:var(--brand); font-weight:400; font-size:24px; margin:0; color:var(--navy); }
+.chead h2 small { font-family:var(--font); font-size:12.5px; font-weight:500; color:var(--text-2); margin-left:6px; }
+.chead .cnt { text-align:right; font-size:11.5px; color:var(--text-2); }
+.chead .cnt b { display:block; font-size:17px; color:var(--navy); }
+.tog { display:flex; justify-content:flex-end; margin:0 2px; }
+.tog label { font-size:12.5px; color:var(--text-2); display:inline-flex; align-items:center; gap:5px; cursor:pointer; }
+.hide-done .gcard.done:not(.now) { display:none; }
+
+/* 시드 */
+.shead { margin-top:12px; border-radius:14px; padding:16px; color:#fff; background:linear-gradient(135deg,var(--sc),var(--sd)); position:relative; overflow:hidden; }
+.shead h2 { font-family:var(--brand); font-weight:400; font-size:26px; margin:0; line-height:1.1; }
+.shead p { margin:6px 0 0; font-size:12.5px; opacity:.92; line-height:1.5; }
+.shead .ss { position:absolute; right:16px; top:14px; text-align:right; }
+.shead .ss b { font-family:var(--brand); font-weight:400; font-size:30px; line-height:1; }
+.shead .ss b i { font-style:normal; opacity:.6; margin:0 4px; }
+.shead .ss small { display:block; font-size:11px; opacity:.85; }
+.mcard { background:#fff; border:1px solid var(--line); border-left:4px solid var(--sc); border-radius:12px; padding:10px 12px; margin:8px 0; }
+.mcard > header { display:flex; align-items:center; gap:6px; font-weight:800; font-size:13.5px; color:var(--sc); }
+.mcard > header .lap { font-size:11.5px; font-weight:700; color:var(--text-2); background:var(--wht-50); border-radius:6px; padding:0 6px; }
+.mcard > header .mr { margin-left:auto; }
+.mteams { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; margin-top:6px; }
+.mteams .t { position:relative; border-radius:9px; padding:6px 9px; font-weight:700; font-size:13.5px; line-height:1.35; }
+.mteams .t.a { background:var(--ta-50); padding-right:38px; } .mteams .t.b { background:var(--tb-50); text-align:right; padding-left:38px; }
+.mteams .t small { display:block; font-size:10.5px; font-weight:800; }
+.mteams .t.a small { color:var(--ta); } .mteams .t.b small { color:var(--tb); }
+.mcard[data-mwin="a"] .mteams .t.a { background:var(--ta-100); box-shadow:inset 0 0 0 2px var(--ta); }
+.mcard[data-mwin="b"] .mteams .t.b { background:var(--tb-100); box-shadow:inset 0 0 0 2px var(--tb); }
+.mcard[data-mwin="a"] .mteams .t.b, .mcard[data-mwin="b"] .mteams .t.a { opacity:.6; }
+.wl { position:absolute; top:50%; transform:translateY(-50%) rotate(-8deg); font-family:var(--font); font-weight:900; font-size:15px; line-height:1; padding:4px 6px 3px; border-radius:7px; border:2px solid currentColor; }
+.t.a .wl { right:7px; } .t.b .wl { left:7px; }
+.wl.w { color:#fff; background:var(--win); border-color:var(--win); }
+.wl.l { color:#8B93A5; background:#fff; }
+.wl.d { color:var(--navy); background:#fff; }
+.wl:empty { display:none; }
+.mcard.just { animation:just 1.6s ease-out; }
+@keyframes just { 0%,35% { box-shadow:0 0 0 3px var(--yellow); } 100% { box-shadow:0 0 0 0 transparent; } }
+.grow { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0 2px; margin-top:5px; border-top:1px dashed var(--line); scroll-margin-top:140px; border-radius:8px; }
+.grow[hidden] { display:none; }
+.grow .gl { min-width:0; }
+.grow .gl b { font-size:13px; }
+.grow .gl small { display:block; font-size:11.5px; color:var(--text-2); }
+.grow .gl .go { border:0; background:none; padding:0; color:var(--text-2); font-size:11.5px; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.gin { display:flex; align-items:center; gap:5px; flex:none; }
+.gin .colon { color:#A0A8B8; font-weight:800; }
+.mk { width:20px; height:20px; border-radius:50%; font-size:10.5px; font-weight:800; display:flex; align-items:center; justify-content:center; color:transparent; }
+[data-win="a"] .mk.a { background:var(--ta); color:#fff; }
+[data-win="b"] .mk.b { background:var(--tb); color:#fff; }
+.grow.tbrow { background:#FFF8E1; border-top:1px solid #F5D77A; padding:7px 8px 4px; margin-top:6px; }
+.grow.tbrow .gl b::before { content:"1:1! "; color:var(--danger); }
+.grow.pop { animation:pop 1.8s ease-out; }
+@keyframes pop { 0% { transform:scale(.96); box-shadow:0 0 0 3px var(--yellow); } 40% { transform:scale(1); box-shadow:0 0 0 3px var(--yellow); } 100% { box-shadow:0 0 0 0 transparent; } }
+.msum { margin-top:6px; font-size:12px; color:var(--text-2); }
+.msum b { color:var(--text); }
+table.rec { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; font-size:13px; }
+.rec th, .rec td { padding:7px 10px; border-bottom:1px solid var(--line-2); text-align:left; }
+.rec th { background:var(--surface-2); font-size:12px; color:var(--text-2); font-weight:700; }
+.rec td.n { font-weight:700; }
+.rec td.r { font-variant-numeric:tabular-nums; color:var(--text-2); white-space:nowrap; }
+.rec td.r b { color:var(--text); }
+.rec tr:last-child td { border-bottom:0; }
+
+/* 전체 */
+.seedgrid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.scard { text-align:left; background:#fff; border:1px solid var(--line); border-top:4px solid var(--sc); border-radius:12px; padding:10px 12px; cursor:pointer; }
+.scard .h { display:flex; justify-content:space-between; align-items:center; font-weight:800; color:var(--sc); font-size:14px; }
+.scard .v { font-family:var(--brand); font-size:28px; line-height:1.15; margin-top:2px; }
+.scard .v .a { color:var(--ta); } .scard .v .b { color:var(--tb); }
+.scard .lw { font-size:11.5px; font-weight:800; }
+.scard .lw.a { color:var(--ta); } .scard .lw.b { color:var(--tb); } .scard .lw.d { color:var(--text-2); }
+.resgrid { display:flex; flex-direction:column; gap:8px; }
+.res { background:#fff; border:1px solid var(--line); border-left:4px solid var(--sc); border-radius:12px; padding:8px 10px; }
+.res .rh { display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:800; color:var(--sc); margin-bottom:6px; }
+.res .rh span:last-child { font-family:var(--brand); font-weight:400; font-size:17px; color:var(--text); }
+.res .rh .a { color:var(--ta); } .res .rh .b { color:var(--tb); }
+.res .rg { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
+.rc { border:1.5px solid var(--line); background:var(--surface-2); border-radius:8px; padding:3px 2px; text-align:center; cursor:pointer; font-size:10.5px; line-height:1.25; color:var(--text-2); min-width:0; }
+.rc b { display:block; font-size:12.5px; color:var(--text); }
+.rc.a { background:var(--ta); border-color:var(--ta); color:#fff; } .rc.a b { color:#fff; }
+.rc.b { background:var(--tb); border-color:var(--tb); color:#fff; } .rc.b b { color:#fff; }
+.rc.d { background:#C7CDD9; border-color:#C7CDD9; color:var(--navy); }
+.rc.live { border-color:var(--yellow); background:var(--yellow-50); color:#8A6500; }
+.rc.tb { border-color:var(--danger); background:#FDEEEE; color:var(--danger); } .scard .v i { font-style:normal; color:#B5BCCB; margin:0 5px; }
+.scard small { font-size:11.5px; color:var(--text-2); }
+.nowgrid .gcard { margin:8px 0; }
+.nowgrid .ctitle { font-weight:800; font-size:13px; color:var(--navy); margin:12px 2px 0; display:flex; justify-content:space-between; }
+.nowgrid .ctitle small { font-weight:500; color:var(--text-2); }
+.tl { display:grid; grid-template-columns:30px repeat(3,minmax(0,1fr)); gap:4px; }
+.tl .hd { font-size:11.5px; font-weight:700; color:var(--text-2); text-align:center; padding:2px 0; }
+.tl .tw { display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12.5px; color:var(--navy); background:#fff; border:1px solid var(--line); border-radius:8px; }
+.tl .tw.cur { background:var(--yellow); border-color:var(--yellow); }
+.tcell { display:block; width:100%; min-width:0; text-align:left; background:var(--sl); border:1.5px solid transparent; border-radius:8px; padding:4px 6px; font:12px/1.3 var(--font); color:var(--text); cursor:pointer; }
+.tcell .tlb { display:block; font-size:10.5px; font-weight:800; color:var(--sc); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tcell .tn { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+.tcell .tn.a { color:var(--ta-d); } .tcell .tn.b { color:var(--tb-d); }
+.tcell .ts { display:flex; align-items:center; gap:4px; font-weight:800; font-variant-numeric:tabular-nums; min-height:16px; }
+.tcell .ts .w { font-size:10px; font-weight:800; color:#fff; border-radius:4px; padding:0 4px; }
+.tcell .ts .w.a { background:var(--ta); } .tcell .ts .w.b { background:var(--tb); }
+.tcell .ts.x { color:var(--danger); font-size:11px; }
+.tcell .ts.x:empty { display:none; }
+.tcell[data-win] { }
+.tcell.done { background:#fff; border-color:var(--line-2); }
+.tcell.done .tn { opacity:.75; }
+.tcell[data-win="a"] { box-shadow:inset 3px 0 0 var(--ta); }
+.tcell[data-win="b"] { box-shadow:inset 3px 0 0 var(--tb); }
+.tcell.cur { border-color:var(--navy); box-shadow:0 0 0 1px var(--navy); }
+.tcell.emp { background:repeating-linear-gradient(45deg,#fafbfd,#fafbfd 5px,#f0f2f6 5px,#f0f2f6 10px); color:#9AA2B2; cursor:default; text-align:center; font-size:11px; padding-top:10px; }
+.rules { background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; font-size:12.5px; color:var(--text-2); line-height:1.65; }
+.rules b { color:var(--text); }
+.rules ul { margin:0; padding-left:18px; }
+
+/* 관리 */
+.admin { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:12px; }
+.admin h3 { margin:0 0 8px; font-size:15px; }
+.admin p { font-size:13px; color:var(--text-2); margin:6px 0; }
+.admin input { width:120px; height:40px; border:1.5px solid var(--line); border-radius:8px; font:700 18px var(--font); text-align:center; letter-spacing:4px; }
+.btn { border:0; border-radius:8px; padding:10px 14px; font-size:14px; font-weight:700; cursor:pointer; background:var(--navy); color:#fff; }
+.btn.ghost { background:var(--navy-50); color:var(--navy); }
+.btn.danger { background:var(--danger); }
+.admin .row2 { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }
+
+#toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--navy); color:#fff; font-size:13px; padding:9px 14px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.2); opacity:0; pointer-events:none; transition:opacity .25s; max-width:90vw; text-align:center; z-index:50; }
+#toast.on { opacity:1; }
+
+@media (max-width:420px) {
+  .wrap { padding:10px 12px 56px; }
+  .sbt { padding:8px 10px; min-height:70px; }
+  .sbt .pt { font-size:42px; } .sbt .tn { font-size:20px; }
+  .sbm { min-width:52px; }
+  .tabs button { font-size:13px; }
+  .subtabs { gap:4px; } .subtabs button { font-size:12px; }
+  .subtabs button small { display:none; }
+  .team { padding:6px 7px; gap:5px; }
+  .nms { font-size:13px; }
+  input.sc { width:42px; height:40px; font-size:18px; }
+  .row { gap:5px; }
+  .tl { grid-template-columns:24px repeat(3,minmax(0,1fr)); gap:3px; }
+  .tcell { padding:3px 4px; font-size:11px; }
+  .shead .ss b { font-size:24px; }
+  .nowgrid .ctitle { flex-wrap:wrap; gap:1px 8px; }
+  .nowgrid .ctitle > small { flex-basis:100%; font-size:11.5px; }
+  .res .rg { grid-template-columns:repeat(5,minmax(0,1fr)); }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <img class="banner" src="banner.webp" alt="라켓뚱보단 청백전 — 패기팀 VS 짬바팀, 11.27 오리초">
+  <div class="when"><span><b>11.27(금) · 오리초</b> · 코트 3개 · 36명</span><span id="conn" class="conn">연결 확인 중</span></div>
+  <section id="board" class="board" aria-live="polite"></section>
+  <nav class="tabbar" aria-label="화면 고르기">
+    <div class="tabs" id="tabs1">
+      <button data-tab="all">전체 대결</button>
+      <button data-tab="c1">1코트</button>
+      <button data-tab="c2">2코트</button>
+      <button data-tab="c3">3코트</button>
+    </div>
+    <div class="subtabs" id="tabs2">
+      <button data-tab="s1" style="--sc:#1192A3">1시드</button>
+      <button data-tab="s2" style="--sc:#6B52B8">2시드</button>
+      <button data-tab="s3" style="--sc:#C24F86">3시드</button>
+      <button data-tab="s4" style="--sc:#D98A1E">4시드</button>
+      <button data-tab="admin" style="--sc:#5B6478">관리<small>PIN</small></button>
+    </div>
+  </nav>
+  <section id="view"></section>
+</main>
+<div id="toast" role="status"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+window.FIREBASE_CONFIG = {
+  databaseURL: "https://minton-e2c92-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "minton-e2c92"
+};
+</script>
+<script>
+'use strict';
+/* ───────── 기본 정보 ───────── */
+const KEY = 'cheongbaek_20261127_v1';   // Firebase 경로 · 이 기기 저장 키
+const PIN = '1127';
+const SEEDS = {
+  1: { A:["조영재","박지섭","주성모","최창원","황규연"], B:["김성곤","최신웅","김건율","유성준","박강호"], c:"#1192A3", d:"#0B6573", l:"#E2F4F6", bo3:true },
+  2: { A:["이민석","전철민","이우성","이정찬"], B:["김진호","박복균","황용담","이태훈"], c:"#6B52B8", d:"#47348A", l:"#EFEBFA", bo3:false },
+  3: { A:["박희수","김혜선","서주영","차송운"], B:["여원미","권영순","김예슬","최서연"], c:"#C24F86", d:"#8F3460", l:"#FAEAF2", bo3:false },
+  4: { A:["조인규","이은미","여현서","서민희","김용숙"], B:["육민주","양연욱","이선미","이영승","박기욱"], c:"#D98A1E", d:"#A3620C", l:"#FDF2E1", bo3:true },
+};
+const COURT_DESC = { 1:"문에서 가까운 코트", 2:"가운데 코트", 3:"가장 안쪽 코트" };
+// [차례, 코트, 시드, 줄i, 줄j, 바퀴, 판]
+const SCHED = [[1,1,4,4,5,1,1],[1,2,3,1,2,1,1],[1,3,2,1,2,1,1],[2,1,1,2,5,1,1],[2,2,3,3,4,1,1],[2,3,2,3,4,1,1],[3,1,4,2,3,1,1],[3,2,3,1,2,1,2],[3,3,2,1,2,1,2],[4,1,1,1,4,1,1],[4,2,3,3,4,1,2],[4,3,2,3,4,1,2],[5,1,4,1,4,1,1],[5,2,1,2,3,1,1],[5,3,4,2,5,1,1],[6,1,1,1,5,1,1],[6,2,3,1,3,1,1],[6,3,2,1,3,1,1],[7,1,4,1,3,1,1],[7,2,3,2,4,1,1],[7,3,2,2,4,1,1],[8,1,1,3,4,1,1],[8,2,3,1,3,1,2],[8,3,2,1,3,1,2],[9,1,4,2,4,1,1],[9,2,3,2,4,1,2],[9,3,2,2,4,1,2],[10,1,4,3,5,1,1],[10,2,1,1,3,1,1],[10,3,1,4,5,1,1],[11,1,4,1,2,1,1],[11,2,3,1,4,1,1],[11,3,2,1,4,1,1],[12,1,1,2,4,1,1],[12,2,3,2,3,1,1],[12,3,2,2,3,1,1],[13,1,1,3,5,1,1],[13,2,3,1,4,1,2],[13,3,2,1,4,1,2],[14,1,4,3,4,1,1],[14,2,3,2,3,1,2],[14,3,2,2,3,1,2],[15,1,4,1,5,1,1],[15,2,1,1,2,1,1],[15,3,1,4,5,1,2],[16,1,4,2,3,1,2],[16,2,3,1,2,2,1],[16,3,2,1,2,2,1],[17,1,1,2,3,1,2],[17,2,3,3,4,2,1],[17,3,2,3,4,2,1],[18,1,4,4,5,1,2],[18,2,3,1,2,2,2],[18,3,2,1,2,2,2],[19,1,1,1,4,1,2],[19,2,3,3,4,2,2],[19,3,2,3,4,2,2],[20,1,4,1,2,1,2],[20,2,1,3,5,1,2],[20,3,4,3,4,1,2],[21,1,1,1,2,1,2],[21,2,3,1,3,2,1],[21,3,2,1,3,2,1],[22,1,4,1,3,1,2],[22,2,3,2,4,2,1],[22,3,2,2,4,2,1],[23,1,1,3,4,1,2],[23,2,3,1,3,2,2],[23,3,2,1,3,2,2],[24,1,4,2,4,1,2],[24,2,3,2,4,2,2],[24,3,2,2,4,2,2],[25,1,4,1,5,1,2],[25,2,1,1,5,1,2],[25,3,1,2,4,1,2],[26,2,3,1,4,2,1],[26,3,2,1,4,2,1],[27,1,4,3,5,1,2],[27,2,3,2,3,2,1],[27,3,2,2,3,2,1],[28,1,4,1,4,1,2],[28,2,3,1,4,2,2],[28,3,2,1,4,2,2],[29,2,3,2,3,2,2],[29,3,2,2,3,2,2],[30,1,1,1,3,1,2],[30,2,1,2,5,1,2],[30,3,4,2,5,1,2]];
+
+/* ───────── 경기·판 만들기 ───────── */
+const GAMES = {}, MATCHES = {}, SEED_MATCHES = {1:[],2:[],3:[],4:[]}, GRID = {};
+for (const [w,c,s,i,j,lap,n] of SCHED) {
+  const bo3 = SEEDS[s].bo3;
+  const mid = bo3 ? `s${s}-${i}${j}` : `s${s}-${i}${j}-L${lap}`;
+  const gid = `${mid}-${n}`;
+  GAMES[gid] = { gid, mid, s, i, j, lap, n, pts: bo3 ? 15 : 21, w, c, tb:false };
+  (GRID[w] = GRID[w] || {})[c] = gid;
+  if (!MATCHES[mid]) MATCHES[mid] = { mid, s, i, j, lap, bo3, games:[], first:w };
+  MATCHES[mid].games.push(gid);
+  MATCHES[mid].first = Math.min(MATCHES[mid].first, w);
+}
+for (const m of Object.values(MATCHES)) {
+  m.games.sort((x,y) => GAMES[x].n - GAMES[y].n);
+  if (m.bo3) {
+    m.tbg = `${m.mid}-3`;
+    GAMES[m.tbg] = { gid:m.tbg, mid:m.mid, s:m.s, i:m.i, j:m.j, lap:1, n:3, pts:11, w:null, c:null, tb:true };
+  }
+  SEED_MATCHES[m.s].push(m.mid);
+}
+for (const s in SEED_MATCHES) {
+  SEED_MATCHES[s].sort((x,y) => MATCHES[x].first - MATCHES[y].first);
+  SEED_MATCHES[s].forEach((mid,k) => MATCHES[mid].no = k + 1);
+}
+const TOTAL_MATCHES = Object.keys(MATCHES).length;   // 44
+const MAX_GRID_W = Math.max(...SCHED.map(r => r[0]));
+
+/* ───────── 점수 상태 ───────── */
+let S = {};            // gid -> {a, b, t}   a = 패기팀(왼쪽 줄), b = 짬바팀(오른쪽 줄)
+let D = null;          // 계산 결과
+const num = x => (x === undefined || x === null || x === '') ? null : Number(x);
+const nm = (s, side, i) => SEEDS[s][side === 'a' ? 'A' : 'B'][i-1];
+const esc = x => String(x).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const TEAM = { a:'패기', b:'짬바' };
+
+function G(gid) {
+  const r = S[gid] || {};
+  const a = num(r.a), b = num(r.b);
+  const done = a !== null && b !== null && a !== b;
+  return { a, b, done, w: done ? (a > b ? 'a' : 'b') : null, any: a !== null || b !== null, t: r.t || 0 };
+}
+function gamesOf(m) { return m.bo3 ? [m.games[0], m.games[1], m.tbg] : m.games.slice(); }
+
+function matchResult(mid) {
+  const m = MATCHES[mid];
+  const g1 = G(m.games[0]), g2 = G(m.games[1]);
+  const g3 = m.bo3 ? G(m.tbg) : null;
+  const res = { state:'wait', w:null, ga:0, gb:0, pa:0, pb:0, needTB:false, byPts:false };
+  if (g1.any || g2.any) res.state = 'live';
+  for (const g of [g1, g2]) {
+    if (g.done) g.w === 'a' ? res.ga++ : res.gb++;
+    if (g.a !== null) res.pa += g.a;
+    if (g.b !== null) res.pb += g.b;
+  }
+  if (!(g1.done && g2.done)) return res;
+  if (m.bo3) {
+    if (g1.w === g2.w) { res.state = 'done'; res.w = g1.w; return res; }
+    res.needTB = true;
+    if (g3.done) { g3.w === 'a' ? res.ga++ : res.gb++; res.state = 'done'; res.w = g3.w; }
+    else res.state = 'tb';
+    return res;
+  }
+  res.state = 'done';
+  if (res.ga !== res.gb) res.w = res.ga > res.gb ? 'a' : 'b';
+  else { res.byPts = true; res.w = res.pa === res.pb ? 'd' : (res.pa > res.pb ? 'a' : 'b'); }
+  return res;
+}
+
+/* 11점 판: 1:1이 되면 그 코트에서 2판 끝나고 바로 이어서 한다(운영 방침 11-11).
+   자리 = 2판과 같은 코트, 2판 바로 다음(after:true). */
+function placeTB(mres) {
+  const out = [];
+  for (const m of Object.values(MATCHES)) {
+    if (!mres[m.mid].needTB) continue;
+    const g2 = GAMES[m.games[1]];
+    out.push({ gid:m.tbg, mid:m.mid, w:g2.w, c:g2.c, after:true });
+  }
+  out.sort((x,y) => x.w - y.w || x.c - y.c);
+  return out;
+}
+
+function derive() {
+  const mres = {};
+  for (const mid in MATCHES) mres[mid] = matchResult(mid);
+  const seed = {}; let A = 0, B = 0, Dr = 0, done = 0;
+  for (const s of [1,2,3,4]) {
+    const o = { a:0, b:0, d:0, done:0, total:SEED_MATCHES[s].length };
+    for (const mid of SEED_MATCHES[s]) {
+      const r = mres[mid];
+      if (r.state !== 'done') continue;
+      o.done++;
+      if (r.w === 'a') o.a++; else if (r.w === 'b') o.b++; else o.d++;
+    }
+    seed[s] = o; A += o.a; B += o.b; Dr += o.d; done += o.done;
+  }
+  const tbList = placeTB(mres);
+  const tb = {}; for (const p of tbList) tb[p.gid] = p;
+  const courts = { 1:[], 2:[], 3:[] };
+  for (const gid in GAMES) { const g = GAMES[gid]; if (!g.tb) courts[g.c].push({ gid, w:g.w }); }
+  for (const p of tbList) courts[p.c].push({ gid:p.gid, w:p.w + 0.5 });   // 2판 바로 뒤
+  const cur = {};
+  for (const c in courts) {
+    courts[c].sort((x,y) => x.w - y.w);
+    const f = courts[c].find(x => !G(x.gid).done);
+    cur[c] = f ? f.gid : null;
+  }
+  // 줄별 기록 (같은 줄 A·B는 늘 같은 경기)
+  const rec = {};
+  for (const mid in MATCHES) {
+    const m = MATCHES[mid], r = mres[mid];
+    for (const i of [m.i, m.j]) {
+      const k = `${m.s}-${i}`; const o = rec[k] || (rec[k] = { w:0, l:0, d:0, n:0 });
+      o.n++;
+      if (r.state === 'done') { if (r.w === 'a') o.w++; else if (r.w === 'b') o.l++; else o.d++; }
+    }
+  }
+  // 판 진행
+  let gDone = 0, gTotal = 0;
+  for (const gid in GAMES) {
+    const g = GAMES[gid];
+    if (g.tb && !tb[gid]) continue;
+    gTotal++; if (G(gid).done) gDone++;
+  }
+  const recent = Object.keys(GAMES).filter(gid => G(gid).done && (!GAMES[gid].tb || tb[gid]))
+    .sort((x,y) => G(y).t - G(x).t).slice(0, 4);
+  D = { mres, seed, A, B, Dr, done, tb, tbList, courts, cur, rec, gDone, gTotal, recent };
+}
+function where(gid) { const g = GAMES[gid]; if (!g.tb) return { w:g.w, c:g.c }; return D.tb[gid] || null; }
+function waveText(loc) { return loc.after ? `${loc.w}차례 이어서` : `${loc.w}차례`; }
+// 이 판으로 경기 승패가 정해졌는가 (마지막 판)
+function decidingGame(mid) {
+  const m = MATCHES[mid], r = D.mres[mid];
+  if (r.state !== 'done') return null;
+  if (m.bo3 && r.needTB) return m.tbg;
+  return m.games[1];
+}
+function gameLabel(g, short) {
+  if (g.tb) return short ? '11점' : '11점 판 (1:1)';
+  if (SEEDS[g.s].bo3) return short ? `${g.n}판` : `${g.n}판 · 15점`;
+  return short ? `${g.lap}바퀴 ${g.n}판` : `${g.lap}바퀴 ${g.n}판 · 21점`;
+}
+function seedVars(s) { const sd = SEEDS[s]; return `--sc:${sd.c};--sd:${sd.d};--sl:${sd.l}`; }
+
+/* ───────── 그리기: 점수판 ───────── */
+const $board = document.getElementById('board');
+const $view = document.getElementById('view');
+function renderBoard() {
+  const { A, B, Dr, done, seed } = D;
+  const left = TOTAL_MATCHES - done;
+  let msg;
+  if (!done) msg = '경기 전';
+  else if (A === B) msg = '동점';
+  else msg = `${TEAM[A > B ? 'a' : 'b']}팀<br>${Math.abs(A-B)}승 앞섬`;
+  if (!left) msg = A === B ? '최종 무승부' : `${TEAM[A > B ? 'a' : 'b']}팀<br>최종 승리!`;
+  const pa = TOTAL_MATCHES ? A / TOTAL_MATCHES * 100 : 0, pb = B / TOTAL_MATCHES * 100, pd = Dr / TOTAL_MATCHES * 100;
+  const recent = D.recent.map(gid => {
+    const g = GAMES[gid], r = G(gid), loc = where(gid), mr = D.mres[g.mid];
+    const fin = decidingGame(g.mid) === gid
+      ? `<span class="mw ${mr.w}">${mr.w === 'd' ? '무승부' : TEAM[mr.w] + ' 1승'}</span>` : '';
+    return `<li><span class="k">${loc ? loc.c + '코트' : ''}</span><span class="n">${g.s}시드 ${MATCHES[g.mid].no}경기 ${gameLabel(g, true)} · ${esc(nm(g.s,'a',g.i))}·${esc(nm(g.s,'a',g.j))} vs ${esc(nm(g.s,'b',g.i))}·${esc(nm(g.s,'b',g.j))}</span><span class="s ${r.w === 'a' ? 'wa' : 'wb'}">${r.a}:${r.b}</span>${fin}</li>`;
+  }).join('') || '<li class="none">아직 끝난 판이 없어요.</li>';
+  $board.innerHTML = `
+    <div class="sb">
+      <div class="sbt a">${A > B && done ? '<span class="lead">앞서는 중</span>' : ''}<div class="tn">${TEAM.a}팀<small>경기 승</small></div><div class="pt">${A}</div></div>
+      <div class="sbm"><div class="colon">:</div><div class="msg">${msg}</div></div>
+      <div class="sbt b">${B > A && done ? '<span class="lead">앞서는 중</span>' : ''}<div class="tn">${TEAM.b}팀<small>경기 승</small></div><div class="pt">${B}</div></div>
+    </div>
+    <div class="sbs">${[1,2,3,4].map(s => `<button data-go="s${s}" style="${seedVars(s)}"><span class="l">${s}시드</span><span class="v"><span class="a">${seed[s].a}</span><i>:</i><span class="b">${seed[s].b}</span></span><small>${seed[s].done}/${seed[s].total} 경기${seed[s].d ? ` · 무 ${seed[s].d}` : ''}</small></button>`).join('')}</div>
+    <div class="prog"><div class="bar"><span class="a" style="width:${pa}%"></span><span class="d" style="width:${pd}%"></span><span class="b" style="width:${pb}%"></span></div>
+      <div class="txt"><span>끝난 경기 <b>${done}</b> / ${TOTAL_MATCHES}${Dr ? ` (무 ${Dr})` : ''}</span><span>끝난 판 ${D.gDone} / ${D.gTotal}</span></div></div>
+    <ul class="recent">${recent}</ul>`;
+}
+
+/* ───────── 그리기: 조각 ───────── */
+function inp(gid, side) {
+  const v = num((S[gid] || {})[side]);
+  return `<input class="sc ${side}" data-gid="${gid}" data-side="${side}" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" value="${v === null ? '' : v}" aria-label="${TEAM[side]}팀 점수">`;
+}
+function gStatus(gid) {
+  const r = G(gid), g = GAMES[gid];
+  if (r.done) return `<span class="bd ${r.w === 'a' ? 'wa' : 'wb'}">${TEAM[r.w]}팀 승</span>`;
+  const loc = where(gid);
+  if (loc && D.cur[loc.c] === gid) return `<span class="bd now">지금 경기</span>`;
+  if (r.any) return `<span class="bd live">입력 중</span>`;
+  return `<span class="bd wait">대기</span>`;
+}
+function matchBadge(mid) {
+  const r = D.mres[mid];
+  if (r.state === 'done') {
+    if (r.w === 'd') return `<span class="bd dr">무승부${r.byPts ? ' (득점 같음)' : ''}</span>`;
+    return `<span class="bd ${r.w === 'a' ? 'wa' : 'wb'}">${TEAM[r.w]}팀 1승${r.byPts ? ' · 득점 합' : ''}</span>`;
+  }
+  if (r.state === 'tb') return `<span class="bd tb">1:1 · 11점 판 남음</span>`;
+  if (r.state === 'live') return `<span class="bd live">진행 중</span>`;
+  return `<span class="bd wait">대기</span>`;
+}
+function matchLine(mid) {
+  const m = MATCHES[mid], r = D.mres[mid];
+  const parts = gamesOf(m).filter(gid => !GAMES[gid].tb || r.needTB || G(gid).any).map(gid => {
+    const g = GAMES[gid], x = G(gid);
+    const sc = x.any ? `${x.a ?? '-'}:${x.b ?? '-'}` : '—';
+    return `<span class="ml-g ${x.done ? 'd' : ''}">${g.tb ? '11점' : g.n + '판'} ${sc}</span>`;
+  }).join('');
+  return `<button class="ml-link" data-go="s${m.s}|${m.games[0]}">${m.s}시드 ${m.no}경기${m.bo3 ? '' : ` · ${m.lap}바퀴`}</button>${parts}<span class="ml-r">${matchBadge(mid)}</span>`;
+}
+function gameCard(gid) {
+  const g = GAMES[gid], r = G(gid), loc = where(gid) || { w:'?', c:'?' };
+  const cls = ['gcard']; if (r.done) cls.push('done'); if (D.cur[loc.c] === gid) cls.push('now');
+  const names = side => `<div class="nms"><span class="tt">${TEAM[side]}팀</span><span>${esc(nm(g.s,side,g.i))}</span><span>${esc(nm(g.s,side,g.j))}</span></div>`;
+  return `<article class="${cls.join(' ')}" data-card="${gid}" data-win="${r.w || ''}" style="${seedVars(g.s)}">
+    <header><span class="wv">${waveText(loc)}</span><span class="chip">${g.s}시드</span><span class="lbl">${gameLabel(g)}</span><span class="st" data-live="g:${gid}">${gStatus(gid)}</span></header>
+    <div class="row"><div class="team a">${names('a')}${inp(gid,'a')}</div><span class="vs">vs</span><div class="team b">${inp(gid,'b')}${names('b')}</div></div>
+    <div class="ml" data-live="m:${g.mid}">${matchLine(g.mid)}</div>
+  </article>`;
+}
+function locText(gid) {
+  const loc = where(gid);
+  if (!loc) return '1:1이 나오면 2판 끝나고 바로 해요';
+  return `<button class="go" data-go="c${loc.c}|${gid}">${waveText(loc)} · ${loc.c}코트</button>`;
+}
+function matchSum(mid) {
+  const m = MATCHES[mid], r = D.mres[mid];
+  if (m.bo3) {
+    if (r.state === 'done') return `판 <b>${r.ga}:${r.gb}</b> → ${TEAM[r.w]}팀 1승${r.needTB ? ' (2:1이어도 1승)' : ''}`;
+    if (r.state === 'tb') return `15점 두 판이 <b>1:1</b> — 같은 코트에서 바로 11점 판을 해요.`;
+    return `15점 두 판을 먼저 이기면 1승. 1:1이면 11점 한 판.`;
+  }
+  if (r.state === 'done') {
+    if (!r.byPts) return `판 <b>${r.ga}:${r.gb}</b> → ${TEAM[r.w]}팀 1승`;
+    if (r.w === 'd') return `판 1:1, 득점 합 <b>${r.pa}:${r.pb}</b> 같음 → 무승부`;
+    return `판 1:1, 득점 합 <b>${r.pa}:${r.pb}</b> → ${TEAM[r.w]}팀 1승`;
+  }
+  return `21점 두 판 모두 해요. 1:1이면 득점 합이 많은 팀이 1승.${(r.pa || r.pb) ? ` 지금 득점 합 <b>${r.pa}:${r.pb}</b>` : ''}`;
+}
+function gameRow(gid) {
+  const g = GAMES[gid], r = G(gid);
+  const hidden = g.tb && !(D.mres[g.mid].needTB || r.any);
+  return `<div class="grow${g.tb ? ' tbrow' : ''}" data-card="${gid}" data-win="${r.w || ''}" ${g.tb ? `data-tbrow="${g.mid}"` : ''} ${hidden ? 'hidden' : ''}>
+    <div class="gl"><b>${gameLabel(g)}</b><small data-live="loc:${gid}">${locText(gid)}</small></div>
+    <div class="gin"><span class="mk a">승</span>${inp(gid,'a')}<span class="colon">:</span>${inp(gid,'b')}<span class="mk b">승</span></div>
+  </div>`;
+}
+function matchCard(mid) {
+  const m = MATCHES[mid], r = D.mres[mid];
+  const t = side => `<div class="t ${side}"><small>${TEAM[side]}팀</small>${esc(nm(m.s,side,m.i))} · ${esc(nm(m.s,side,m.j))}<span class="wl ${wlClass(mid, side)}" data-live="wl:${mid}/${side}">${wlText(mid, side)}</span></div>`;
+  return `<article class="mcard" data-mcard="${mid}" data-mwin="${r.state === 'done' ? r.w : ''}" style="${seedVars(m.s)}">
+    <header>${m.no}경기${m.bo3 ? '' : ` <span class="lap">${m.lap}바퀴</span>`}<span class="mr" data-live="mr:${mid}">${matchBadge(mid)}</span></header>
+    <div class="mteams">${t('a')}<span class="vs">vs</span>${t('b')}</div>
+    ${gamesOf(m).map(gameRow).join('')}
+    <div class="msum" data-live="ms:${mid}">${matchSum(mid)}</div>
+  </article>`;
+}
+function wlText(mid, side) {
+  const r = D.mres[mid]; if (r.state !== 'done') return '';
+  if (r.w === 'd') return '무'; return r.w === side ? '승' : '패';
+}
+function wlClass(mid, side) {
+  const r = D.mres[mid]; if (r.state !== 'done') return '';
+  if (r.w === 'd') return 'd'; return r.w === side ? 'w' : 'l';
+}
+function recText(s, i, side) {
+  const o = D.rec[`${s}-${i}`] || { w:0, l:0, d:0, n:0 };
+  const w = side === 'a' ? o.w : o.l, l = side === 'a' ? o.l : o.w;
+  return `<b>${w}승</b> ${l}패${o.d ? ` ${o.d}무` : ''} <small>/ ${o.n}경기</small>`;
+}
+function recTable(s) {
+  const sd = SEEDS[s];
+  return `<table class="rec"><thead><tr><th>${TEAM.a}팀</th><th>기록</th><th>${TEAM.b}팀</th><th>기록</th></tr></thead><tbody>${
+    sd.A.map((a,k) => `<tr><td class="n">${esc(a)}</td><td class="r">${recText(s,k+1,'a')}</td><td class="n">${esc(sd.B[k])}</td><td class="r">${recText(s,k+1,'b')}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+function seedLead(s) {
+  const o = D.seed[s];
+  if (!o.done) return { t:'경기 전', k:'d' };
+  const k = o.a === o.b ? 'd' : (o.a > o.b ? 'a' : 'b');
+  if (o.done === o.total) return { t: k === 'd' ? '최종 무승부' : `${TEAM[k]}팀 승리!`, k };
+  if (k === 'd') return { t:'동점', k };
+  // 남은 경기로 뒤집을 수 없으면 확정
+  const left = o.total - o.done, gap = Math.abs(o.a - o.b);
+  return { t: gap > left ? `${TEAM[k]}팀 승리 확정` : `${TEAM[k]}팀 ${gap}승 앞섬`, k };
+}
+function seedScore(s) {
+  const o = D.seed[s], L = seedLead(s);
+  return `<b>${o.a}<i>:</i>${o.b}</b><small>${TEAM.a} : ${TEAM.b} · ${o.done}/${o.total} 경기${o.d ? ` · 무 ${o.d}` : ''}</small><small><strong>${L.t}</strong></small>`;
+}
+function courtCount(c) {
+  const list = D.courts[c]; const d = list.filter(x => G(x.gid).done).length;
+  return `끝난 판<b>${d} / ${list.length}</b>`;
+}
+function tlScore(gid) {
+  const r = G(gid);
+  let h = r.any ? `<span>${r.a ?? '-'}:${r.b ?? '-'}</span>` : '';
+  if (r.done) h += `<span class="w ${r.w}">${TEAM[r.w]}</span>`;
+  return h;
+}
+// 1:1이면 2판 칸 안에 11점 판을 붙여 보여준다 (2판 바로 뒤에 하므로)
+function tlTB(gid) {
+  const g = GAMES[gid], m = MATCHES[g.mid];
+  if (!(m.bo3 && g.n === 2 && D.mres[m.mid].needTB)) return '';
+  const t = G(m.tbg);
+  return `+11점 ${t.any ? `${t.a ?? '-'}:${t.b ?? '-'}` : '이어서'}${t.done ? ` <span class="w ${t.w}">${TEAM[t.w]}</span>` : ''}`;
+}
+function resGrid() {
+  return [1,2,3,4].map(s => {
+    const o = D.seed[s];
+    const chips = SEED_MATCHES[s].map(mid => {
+      const m = MATCHES[mid], r = D.mres[mid];
+      let cls = '', txt = '대기';
+      if (r.state === 'done') { cls = r.w; txt = r.w === 'd' ? '무' : TEAM[r.w]; }
+      else if (r.state === 'tb') { cls = 'tb'; txt = '11점'; }
+      else if (r.state === 'live') { cls = 'live'; txt = '진행'; }
+      return `<button class="rc ${cls}" data-go="s${s}|${mid}" title="${s}시드 ${m.no}경기"><b>${m.no}</b>${txt}</button>`;
+    }).join('');
+    return `<div class="res" style="${seedVars(s)}"><div class="rh"><span>${s}시드 · ${seedLead(s).t}</span><span><span class="a">${o.a}</span> : <span class="b">${o.b}</span></span></div><div class="rg">${chips}</div></div>`;
+  }).join('');
+}
+
+function liveHTML(key) {
+  const k = key.indexOf(':'); const t = key.slice(0, k), id = key.slice(k + 1);
+  switch (t) {
+    case 'g': return gStatus(id);
+    case 'm': return matchLine(id);
+    case 'mr': return matchBadge(id);
+    case 'ms': return matchSum(id);
+    case 'loc': return locText(id);
+    case 'ss': return seedScore(+id);
+    case 'rec': return recTable(+id);
+    case 'cc': return courtCount(+id);
+    case 'ts': return tlScore(id);
+    case 'tx': return tlTB(id);
+    case 'wl': { const [mid, side] = id.split('/'); return wlText(mid, side); }
+    case 'rg': return resGrid();
+  }
+  return '';
+}
+
+/* ───────── 그리기: 화면 ───────── */
+let TAB = 'all';
+const TABS = ['all','c1','c2','c3','s1','s2','s3','s4','admin'];
+let hideDone = false;
+try { hideDone = localStorage.getItem(KEY + ':hideDone') === '1'; } catch (e) {}
+
+function viewAll() {
+  const nowCards = [1,2,3].map(c => {
+    const gid = D.cur[c];
+    const list = D.courts[c];
+    const idx = gid ? list.findIndex(x => x.gid === gid) : -1;
+    const next = idx >= 0 && list[idx + 1] ? GAMES[list[idx + 1].gid] : null;
+    const nextTxt = next ? `다음: ${next.s}시드 ${gameLabel(next, true)} · ${esc(nm(next.s,'a',next.i))}·${esc(nm(next.s,'a',next.j))} vs ${esc(nm(next.s,'b',next.i))}·${esc(nm(next.s,'b',next.j))}` : '';
+    return `<div class="ctitle"><span>${c}코트 <small>${COURT_DESC[c]}</small></span><small>${nextTxt}</small></div>${gid ? gameCard(gid) : '<div class="empty-note">이 코트 경기가 모두 끝났어요.</div>'}`;
+  }).join('');
+  const seedCards = [1,2,3,4].map(s => {
+    const o = D.seed[s], L = seedLead(s);
+    return `<button class="scard" data-go="s${s}" style="${seedVars(s)}"><div class="h"><span>${s}시드</span><small>${o.done}/${o.total} 경기</small></div><div class="v"><span class="a">${o.a}</span><i>:</i><span class="b">${o.b}</span></div><span class="lw ${L.k}">${L.t}</span><br><small>${SEEDS[s].bo3 ? '15·15·11점, 2판 먼저 이기면 1승' : '21점 2판 × 2바퀴, 1:1이면 득점 합'}${o.d ? ` · 무 ${o.d}` : ''}</small></button>`;
+  }).join('');
+  const curWaves = new Set([1,2,3].map(c => D.cur[c] && where(D.cur[c]).w).filter(Boolean));
+  let tl = `<div class="tl"><div class="hd">차례</div><div class="hd">1코트</div><div class="hd">2코트</div><div class="hd">3코트</div>`;
+  for (let w = 1; w <= MAX_GRID_W; w++) {
+    tl += `<div class="tw ${curWaves.has(w) ? 'cur' : ''}">${w}</div>`;
+    for (let c = 1; c <= 3; c++) {
+      const gid = GRID[w] && GRID[w][c];
+      if (!gid) { tl += `<div class="tcell emp">비어 있음</div>`; continue; }
+      const g = GAMES[gid], r = G(gid);
+      const tbCur = g.n === 2 && MATCHES[g.mid].tbg && D.cur[c] === MATCHES[g.mid].tbg;
+      const cls = ['tcell']; if (r.done) cls.push('done'); if (D.cur[c] === gid || tbCur) cls.push('cur');
+      tl += `<button class="${cls.join(' ')}" data-card="${gid}" data-win="${r.w || ''}" data-go="c${c}|${tbCur ? MATCHES[g.mid].tbg : gid}" style="${seedVars(g.s)}"><span class="tlb">${g.s}시드 ${gameLabel(g, true)}</span><span class="tn a">${esc(nm(g.s,'a',g.i))}·${esc(nm(g.s,'a',g.j))}</span><span class="tn b">${esc(nm(g.s,'b',g.i))}·${esc(nm(g.s,'b',g.j))}</span><span class="ts" data-live="ts:${gid}">${tlScore(gid)}</span><span class="ts x" data-live="tx:${gid}">${tlTB(gid)}</span></button>`;
+    }
+  }
+  tl += `</div>`;
+  return `
+    <h2 class="sec">지금 코트에서 <small>점수를 넣으면 모든 화면에 바로 반영돼요</small></h2>
+    <div class="nowgrid">${nowCards}</div>
+    <h2 class="sec">시드별 대결</h2>
+    <div class="seedgrid">${seedCards}</div>
+    <h2 class="sec">경기 결과 <small>칸 색 = 이긴 팀 · 누르면 그 경기로 가요</small></h2>
+    <div class="resgrid" data-live="rg:all">${resGrid()}</div>
+    <h2 class="sec">차례별 전체 순서 <small>칸을 누르면 그 코트로 가요</small></h2>
+    ${tl}
+    <h2 class="sec">승패 규칙</h2>
+    <div class="rules"><ul>
+      <li><b>1·4시드</b>: 15점 · 15점, 1:1이면 <b>같은 코트에서 바로 이어서</b> 11점 한 판. 2판 먼저 이긴 팀이 <b>1승</b> (2:1로 이겨도 1승, 진 팀 1패).</li>
+      <li><b>2·3시드</b>: 21점 두 판 모두 하고, 짝 돌리기는 두 바퀴. 2:0이면 1승, <b>1:1이면 두 판 득점 합이 많은 팀이 1승</b>. 합까지 같으면 무승부.</li>
+      <li>같은 줄 두 사람은 늘 맞붙고, 같은 시드 안에서 파트너만 바뀝니다. 판마다 끊어서 쉬었다가 다음 판을 해요.</li>
+    </ul></div>`;
+}
+function viewCourt(c) {
+  const list = D.courts[c];
+  return `
+    <div class="chead"><h2>${c}코트<small>${COURT_DESC[c]}</small></h2><div class="cnt" data-live="cc:${c}">${courtCount(c)}</div></div>
+    <div class="tog"><label><input type="checkbox" id="hideDone" ${hideDone ? 'checked' : ''}> 끝난 판 접기</label></div>
+    <div class="clist ${hideDone ? 'hide-done' : ''}">${list.map(x => gameCard(x.gid)).join('')}</div>`;
+}
+function viewSeed(s) {
+  const sd = SEEDS[s];
+  return `
+    <div class="shead" style="${seedVars(s)}">
+      <h2>${s}시드</h2>
+      <div class="ss" data-live="ss:${s}">${seedScore(s)}</div>
+      <p>${sd.bo3 ? '짝 조합 10경기 · 15점 · 15점, 1:1이면 11점<br>2판 먼저 이긴 팀이 1승' : '짝 조합 6경기 × 2바퀴 = 12경기 · 21점 두 판<br>2:0이면 1승, 1:1이면 득점 합이 많은 팀 1승'}</p>
+    </div>
+    ${SEED_MATCHES[s].map(matchCard).join('')}
+    <h2 class="sec">개인 기록 <small>같은 줄 두 사람은 늘 맞붙어요</small></h2>
+    <div data-live="rec:${s}">${recTable(s)}</div>`;
+}
+let unlocked = false;
+try { unlocked = sessionStorage.getItem(KEY + ':pin') === '1'; } catch (e) {}
+function viewAdmin() {
+  if (!unlocked) return `<div class="admin"><h3>관리</h3><p>점수 전체 지우기 같은 일은 PIN을 넣어야 해요.</p>
+    <div class="row2"><input id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" aria-label="PIN"><button class="btn" data-act="pin">확인</button></div></div>`;
+  return `<div class="admin"><h3>연결 상태</h3><p id="connTxt">${connText()}</p></div>
+    <div class="admin"><h3>백업</h3><p>지금까지 들어온 점수를 파일로 받아 둡니다.</p><div class="row2"><button class="btn ghost" data-act="backup">점수 백업 받기</button></div></div>
+    <div class="admin"><h3>점수 전체 지우기</h3><p>모든 기기에서 점수가 사라집니다. 대회 전 연습 점수를 지울 때만 쓰세요.</p><div class="row2"><button class="btn danger" data-act="reset">전체 지우기</button><button class="btn ghost" data-act="lock">잠그기</button></div></div>`;
+}
+
+function renderView() {
+  if (TAB === 'all') $view.innerHTML = viewAll();
+  else if (TAB[0] === 'c') $view.innerHTML = viewCourt(+TAB[1]);
+  else if (TAB[0] === 's') $view.innerHTML = viewSeed(+TAB[1]);
+  else $view.innerHTML = viewAdmin();
+  structSig = sig();
+}
+function patchView() {
+  const ae = document.activeElement;
+  $view.querySelectorAll('input.sc').forEach(el => {
+    if (el === ae) return;
+    const v = num((S[el.dataset.gid] || {})[el.dataset.side]);
+    const str = v === null ? '' : String(v);
+    if (el.value !== str) el.value = str;
+  });
+  $view.querySelectorAll('[data-card]').forEach(el => {
+    const gid = el.dataset.card, r = G(gid);
+    el.dataset.win = r.w || '';
+    el.classList.toggle('done', r.done);
+    if (el.classList.contains('gcard')) { const loc = where(gid); el.classList.toggle('now', !!loc && D.cur[loc.c] === gid); }
+    if (el.dataset.tbrow) {
+      const show = D.mres[el.dataset.tbrow].needTB || r.any;
+      if (show && el.hidden) { el.hidden = false; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+      else if (!show) el.hidden = true;
+    }
+  });
+  $view.querySelectorAll('[data-mcard]').forEach(el => {
+    const r = D.mres[el.dataset.mcard]; const nw = r.state === 'done' ? r.w : '';
+    if (el.dataset.mwin !== nw) {
+      el.dataset.mwin = nw;
+      if (nw) { el.classList.remove('just'); void el.offsetWidth; el.classList.add('just'); }
+    }
+  });
+  $view.querySelectorAll('[data-live]').forEach(el => {
+    const key = el.dataset.live;
+    const h = liveHTML(key); if (el.innerHTML !== h) el.innerHTML = h;
+    if (key.startsWith('wl:')) { const [mid, side] = key.slice(3).split('/'); el.className = 'wl ' + wlClass(mid, side); }
+  });
+}
+// 화면 뼈대가 바뀌는지(11점 판 자리, 코트별 지금 경기) 판단용
+let structSig = '';
+function sig() {
+  const base = D.tbList.map(p => `${p.gid}@${p.w}.${p.c}`).join(',');
+  return TAB === 'all' ? base + '|' + [1,2,3].map(c => D.cur[c]).join(',') : base;
+}
+let dirty = false;
+function typing() { const ae = document.activeElement; return !!(ae && ae.matches && ae.matches('input.sc') && $view.contains(ae)); }
+function refresh() {
+  derive();
+  renderBoard();
+  if (TAB === 'admin') { const el = document.getElementById('connTxt'); if (el) el.textContent = connText(); return; }
+  if (sig() === structSig) { patchView(); return; }
+  if (typing()) { patchView(); dirty = true; return; }
+  const y = window.scrollY; renderView(); window.scrollTo(0, y); dirty = false;
+}
+document.addEventListener('focusout', () => {
+  setTimeout(() => { if (dirty && !typing()) { const y = window.scrollY; renderView(); window.scrollTo(0, y); dirty = false; } }, 120);
+});
+
+function setTab(t, gid) {
+  if (!TABS.includes(t)) t = 'all';
+  TAB = t;
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  try { localStorage.setItem(KEY + ':tab', t); } catch (e) {}
+  if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
+  renderView();
+  const target = gid ? ($view.querySelector(`[data-card="${gid}"]`) || $view.querySelector(`[data-mcard="${gid}"]`))
+    : (t[0] === 'c' && D.cur[+t[1]] ? $view.querySelector(`[data-card="${D.cur[+t[1]]}"]`) : null);
+  if (target) {
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block:'center', behavior: gid ? 'smooth' : 'auto' });
+      if (gid) { target.classList.remove('flash'); void target.offsetWidth; target.classList.add('flash'); }
+    });
+  } else {
+    const bar = document.querySelector('.tabbar');
+    if (window.scrollY > bar.offsetTop) window.scrollTo(0, bar.offsetTop);
+  }
+}
+
+/* ───────── 입력 ───────── */
+function commit(el) {
+  const gid = el.dataset.gid, side = el.dataset.side;
+  const v = el.value === '' ? null : Math.min(99, parseInt(el.value, 10));
+  if (num((S[gid] || {})[side]) === v) return;
+  setScore(gid, side, v);
+}
+$view.addEventListener('input', e => {
+  const el = e.target; if (!el.matches('input.sc')) return;
+  const clean = el.value.replace(/\D/g, '').slice(0, 2);
+  if (el.value !== clean) el.value = clean;
+  clearTimeout(el._t); el._t = setTimeout(() => commit(el), 700);
+});
+$view.addEventListener('change', e => {
+  const el = e.target;
+  if (el.matches('input.sc')) { clearTimeout(el._t); commit(el); }
+  if (el.id === 'hideDone') {
+    hideDone = el.checked;
+    try { localStorage.setItem(KEY + ':hideDone', hideDone ? '1' : '0'); } catch (e2) {}
+    const l = $view.querySelector('.clist'); if (l) l.classList.toggle('hide-done', hideDone);
+  }
+});
+$view.addEventListener('keydown', e => {
+  const el = e.target;
+  if (e.key === 'Enter' && el.matches('input.sc')) {
+    e.preventDefault(); clearTimeout(el._t); commit(el);
+    if (el.dataset.side === 'a') { const b = el.closest('[data-card]').querySelector('input.sc.b'); if (b) { b.focus(); b.select(); return; } }
+    el.blur();
+  }
+  if (e.key === 'Enter' && el.id === 'pin') checkPin();
+});
+$view.addEventListener('focusin', e => { if (e.target.matches('input.sc')) setTimeout(() => { try { e.target.select(); } catch (x) {} }, 0); });
+
+document.addEventListener('click', e => {
+  const tb = e.target.closest('[data-tab]');
+  if (tb) { setTab(tb.dataset.tab); return; }
+  const go = e.target.closest('[data-go]');
+  if (go) { const [t, gid] = go.dataset.go.split('|'); setTab(t, gid); return; }
+  const act = e.target.closest('[data-act]');
+  if (act) adminAct(act.dataset.act);
+});
+
+/* ───────── 관리 ───────── */
+function checkPin() {
+  const el = document.getElementById('pin');
+  if (el && el.value === PIN) { unlocked = true; try { sessionStorage.setItem(KEY + ':pin', '1'); } catch (e) {} renderView(); }
+  else { toast('PIN이 맞지 않아요.'); if (el) { el.value = ''; el.focus(); } }
+}
+function adminAct(a) {
+  if (a === 'pin') return checkPin();
+  if (a === 'lock') { unlocked = false; try { sessionStorage.removeItem(KEY + ':pin'); } catch (e) {} renderView(); return; }
+  if (a === 'backup') {
+    const blob = new Blob([JSON.stringify({ key:KEY, savedAt:new Date().toISOString(), scores:S }, null, 1)], { type:'application/json' });
+    const u = URL.createObjectURL(blob); const link = document.createElement('a');
+    link.href = u; link.download = `청백전_점수백업_${new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}.json`;
+    document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(u), 1000);
+    return;
+  }
+  if (a === 'reset') {
+    if (!confirm('모든 점수를 지울까요? 모든 기기에서 사라지고 되돌릴 수 없어요.')) return;
+    S = {}; saveLocal();
+    if (cloud) cloud.remove().then(() => toast('점수를 모두 지웠어요.')).catch(() => toast('지우기 실패 — 인터넷이나 권한을 확인해 주세요.'));
+    else toast('이 기기의 점수를 지웠어요.');
+    refresh();
+  }
+}
+
+/* ───────── 저장 · 실시간 연동 ───────── */
+let cloud = null, connState = 'local';
+function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function loadLocal() { try { S = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { S = {}; } }
+function connText() {
+  return ({ ok:'실시간 연결됨 — 모든 기기에 바로 공유돼요.', off:'인터넷 연결이 끊겼어요. 다시 연결되면 자동으로 맞춰져요.', denied:'서버 저장 권한이 없어요. 지금은 이 기기에만 저장돼요.', local:'서버에 연결하지 않았어요. 이 기기에만 저장돼요.', wait:'연결 확인 중…' })[connState];
+}
+function showConn() {
+  const el = document.getElementById('conn');
+  el.className = 'conn' + (connState === 'ok' ? ' ok' : (connState === 'denied' || connState === 'off') ? ' bad' : '');
+  el.textContent = ({ ok:'실시간 연결됨', off:'연결 끊김', denied:'저장 권한 없음', local:'이 기기에만 저장', wait:'연결 확인 중' })[connState];
+  const t = document.getElementById('connTxt'); if (t) t.textContent = connText();
+}
+function setScore(gid, side, v) {
+  const mid = GAMES[gid].mid, before = D.mres[mid].state;
+  const cur = Object.assign({}, S[gid] || {});
+  if (v === null) delete cur[side]; else cur[side] = v;
+  cur.t = Date.now();
+  const empty = cur.a === undefined && cur.b === undefined;
+  if (empty) delete S[gid]; else S[gid] = cur;
+  saveLocal(); refresh();
+  // 입력한 사람 화면에 바로 알려 주기
+  const r = D.mres[mid], m = MATCHES[mid];
+  if (before !== 'done' && r.state === 'done') {
+    toast(`${m.s}시드 ${m.no}경기 끝! ${r.w === 'd' ? '무승부' : `${TEAM[r.w]}팀 1승`}${r.byPts ? ` (득점 합 ${r.pa}:${r.pb})` : ''}`);
+  } else if (before !== 'tb' && r.state === 'tb') {
+    const loc = where(m.tbg);
+    toast(`1:1! ${m.s}시드 ${m.no}경기 11점 판 — ${loc ? loc.c + '코트에서 바로 이어서' : '바로 이어서'}`);
+  }
+  if (!cloud) return;
+  const p = empty ? cloud.child(gid).remove()
+    : cloud.child(gid).update({ [side]: v === null ? null : v, t: firebase.database.ServerValue.TIMESTAMP });
+  p.catch(() => toast('저장이 안 됐어요. 인터넷이나 권한을 확인해 주세요.'));
+}
+function initCloud() {
+  if (!window.firebase || !window.FIREBASE_CONFIG) { connState = 'local'; showConn(); return; }
+  try {
+    firebase.initializeApp(window.FIREBASE_CONFIG);
+    const db = firebase.database();
+    cloud = db.ref(KEY + '/scores');
+    connState = 'wait'; showConn();
+    cloud.on('value', snap => {
+      S = snap.val() || {}; saveLocal();
+      if (connState !== 'off') connState = 'ok';
+      showConn(); refresh();
+    }, () => { connState = 'denied'; cloud = null; showConn(); });
+    db.ref('.info/connected').on('value', s => {
+      if (s.val()) { if (connState === 'off' || connState === 'wait') connState = cloud ? 'ok' : connState; }
+      else if (connState === 'ok') connState = 'off';
+      showConn();
+    });
+  } catch (e) { connState = 'local'; cloud = null; showConn(); }
+}
+
+let toastT;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2600); }
+
+/* ───────── 시작 ───────── */
+loadLocal();
+derive();
+renderBoard();
+let startTab = location.hash.slice(1);
+if (!TABS.includes(startTab)) { try { startTab = localStorage.getItem(KEY + ':tab') || 'all'; } catch (e) { startTab = 'all'; } }
+setTab(startTab);
+showConn();
+initCloud();
+window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (TABS.includes(t) && t !== TAB) setTab(t); });
+</script>
+</body>
+</html>
